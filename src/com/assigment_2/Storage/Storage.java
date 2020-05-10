@@ -57,7 +57,9 @@ public class Storage implements Serializable {
 
                     System.out.println(" > SENDING MESSAGE: " + chunkToEliminate.version + " REMOVED " + PeerClient.getId() + " " + chunkToEliminate.fileId + " " + chunkToEliminate.chunkNo);
                     byte[] message = MessageFactory.createMessage(chunkToEliminate.version, "REMOVED", PeerClient.getId(), chunkToEliminate.fileId, chunkToEliminate.chunkNo);
-                    PeerClient.getMC().sendMessage(message);
+
+                    //TODO: change this
+                    //PeerClient.getMC().sendMessage(message);
                 }
 
             } catch (IOException e) {
@@ -120,8 +122,9 @@ public class Storage implements Serializable {
                 }
             }
 
+            //TODO: change this
             //SEND CHUNK STORAGE CONFIRMATION MESSAGE
-            PeerClient.getMC().confirmStore(chunk.version, PeerClient.getId(), chunk.fileId, chunk.chunkNo);
+            //PeerClient.getMC().confirmStore(chunk.version, PeerClient.getId(), chunk.fileId, chunk.chunkNo);
 
             chunk.peersBackingUpChunk.add(PeerClient.getId());
             this.storedChunks.put(key, chunk);

@@ -1,15 +1,9 @@
 package com.assigment_2;
 
-import com.assigment_2.Protocol.MulticastBackupChannel;
-import com.assigment_2.Protocol.MulticastControlChannel;
-import com.assigment_2.Protocol.MulticastDataRecoveryChannel;
+import com.assigment_2.Chord.Node;
 import com.assigment_2.Storage.Storage;
 
 import java.io.*;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
@@ -18,26 +12,29 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 * */
 public class PeerClient {
 
+    private static final int M = 8;
+    private static Peer peer;
     private final static String serializeObjectName = "Storage";
     static private Double version;
     private static String id;
-    private static MulticastBackupChannel MDB;
-    public static MulticastControlChannel MC;
-    public static MulticastDataRecoveryChannel MDR;
+    private static String address;
+    private static int port;
+
+    private static Node node;
 
     private static Storage storage = new Storage();
 
     private static final ScheduledThreadPoolExecutor exec = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(250);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         if(!parseArgs(args))
             System.exit(-1);
     }
 
-    private static boolean parseArgs(String[] args) {
+    private static boolean parseArgs(String[] args) throws Exception {
 
-        if(args.length != 9){
-            System.err.println("Usage: PeerClient <version> <server id> <access_point> <MC_IP_address> <MC_port> <MDB_IP_address> <MDB_port> <MDR_IP_address> <MDR_port>");
+        if(args.length != 4 && args.length != 6){
+            System.err.println("Usage: PeerClient <version> <server id> <address> <port> [<random_node_address> <random_node_port>]");
             return false;
         }
 
@@ -49,29 +46,15 @@ public class PeerClient {
         }
 
         id = args[1];
-        String remote_object_name = args[2];
-        String MCAddress = args[3];
-        int MCPort = Integer.parseInt(args[4]);
-        String MDBAddress = args[5];
-        int MDBPort = Integer.parseInt(args[6]);
-        String MDRAddress = args[7];
-        int MDRPort = Integer.parseInt(args[8]);
+        address = args[2];
+        port = Integer.parseInt(args[3]);
 
-        MDB = new MulticastBackupChannel(MDBAddress, MDBPort);
-        MC = new MulticastControlChannel(MCAddress, MCPort);
-        MDR = new MulticastDataRecoveryChannel(MDRAddress, MDRPort);
+        peer = new Peer("TLSv1.2", address, port, version, id);
 
-        Peer obj = new Peer(version, id, MC, MDB, MDR);
+        node = new Node(address, port, M);
 
-        try {
-            InterfacePeer peer = (InterfacePeer) UnicastRemoteObject.exportObject(obj, 0);
-            Registry rmiReg  = LocateRegistry.getRegistry();
-            rmiReg.rebind(remote_object_name, peer);
-
-        } catch (RemoteException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        }
+        //TODO: make Peer listen to messages with peer.start() in runnable
+        // adjust read function in server to behave as we'd like
 
         getStorageFromFile();
 
@@ -80,23 +63,7 @@ public class PeerClient {
 
         System.out.println("Peer " + getId() + " ready");
 
-        exec.execute(MDB);
-        exec.execute(MC);
-        exec.execute(MDR);
-
         return true;
-    }
-
-    public static MulticastControlChannel getMC() {
-        return MC;
-    }
-
-    public static MulticastBackupChannel getMDB() {
-        return MDB;
-    }
-
-    public static MulticastDataRecoveryChannel getMDR() {
-        return MDR;
     }
 
     public static String getId() {
