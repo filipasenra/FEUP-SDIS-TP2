@@ -6,11 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.SecureRandom;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
+import javax.net.ssl.*;
 
 /**
  * An SSL/TLS client that connects to a server using its IP address and port.
@@ -23,7 +19,7 @@ import javax.net.ssl.SSLSession;
  *
  * @author <a href="mailto:alex.a.karnezis@gmail.com">Alex Karnezis</a>
  */
-public class SSLEngineClient extends SSLEngineBase {
+public class SSLEngineClient extends SSLEngineHandler {
 
     /**
      * The remote address of the server this client is configured to connect to.
@@ -59,16 +55,24 @@ public class SSLEngineClient extends SSLEngineBase {
         this.remoteAddress = remoteAddress;
         this.port = port;
 
+        KeyManager[] keyManagers = createKeyManagers("../com/assigment_2/Resources/client.jks", "storepass", "keypass");
+        TrustManager[] trustManagers = createTrustManagers("../com/assigment_2/Resources/trustedCerts.jks", "storepass");
+
         SSLContext context = SSLContext.getInstance(protocol);
-        context.init(createKeyManagers("../com/assigment_2/Resources/client.jks", "storepass", "keypass"), createTrustManagers("../com/assigment_2/Resources/trustedCerts.jks", "storepass"), new SecureRandom());
-        engine = context.createSSLEngine(remoteAddress, port);
-        engine.setUseClientMode(true);
+        context.init(keyManagers, trustManagers, new SecureRandom());
+
+        this.engine = context.createSSLEngine(remoteAddress, port);
+        this.engine.setUseClientMode(true);
 
         SSLSession session = engine.getSession();
-        myAppData = ByteBuffer.allocate(1024);
-        myNetData = ByteBuffer.allocate(session.getPacketBufferSize());
-        peerAppData = ByteBuffer.allocate(1024);
-        peerNetData = ByteBuffer.allocate(session.getPacketBufferSize());
+
+        ByteBuffer myAppData = ByteBuffer.allocate(1024);
+        ByteBuffer myNetData = ByteBuffer.allocate(session.getPacketBufferSize());
+        ByteBuffer peerAppData = ByteBuffer.allocate(1024);
+        ByteBuffer peerNetData = ByteBuffer.allocate(session.getPacketBufferSize());
+
+        setByteBuffers(myAppData, myNetData, peerAppData, peerNetData);
+
     }
 
     /**
@@ -78,13 +82,20 @@ public class SSLEngineClient extends SSLEngineBase {
      * @throws Exception
      */
     public boolean connect() throws Exception {
+
+        // Create a nonblocking socket channel
         socketChannel = SocketChannel.open();
         socketChannel.configureBlocking(false);
         socketChannel.connect(new InetSocketAddress(remoteAddress, port));
+
+        // Complete connection
         while (!socketChannel.finishConnect()) {
-            // can do something here...
+            // do something until connect completed
         }
 
+        //Created byte buffers for holding application and encoded data in constructor
+
+        // Do initial handshake
         engine.beginHandshake();
         return doHandshake(socketChannel, engine);
     }
@@ -95,7 +106,7 @@ public class SSLEngineClient extends SSLEngineBase {
      * @param message - message to be sent to the server.
      * @throws IOException if an I/O error occurs to the socket channel.
      */
-    public void write(String message) throws IOException {
+    public void write(String message) throws Exception {
         write(socketChannel, engine, message);
     }
 
@@ -104,11 +115,12 @@ public class SSLEngineClient extends SSLEngineBase {
      *
      * @throws IOException if an I/O error occurs to the socket channel.
      */
-    public void shutdown() throws IOException {
-        System.out.println("About to close connection with the server...");
+    public void shutdown() throws Exception {
+
+        System.out.println("Closing connection to server...");
         closeConnection(socketChannel, engine);
-        executor.shutdown();
-        System.out.println("Goodbye!");
+        exec.shutdown();
+        System.out.println("Closed. See you later!");
     }
 
 }

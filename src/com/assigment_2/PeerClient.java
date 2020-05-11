@@ -55,7 +55,7 @@ public class PeerClient {
         serverRunnable = new ServerRunnable(new Peer("TLSv1.2", address, port, version, id));
 
         exec.execute(serverRunnable);
-        //TODO: adjust read function in server to behave as we'd like
+        //TODO: adjust read function in peer to behave as we'd like
 
         getStorageFromFile();
 

@@ -1,6 +1,5 @@
 package com.assigment_2.SSLEngine;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -13,8 +12,6 @@ import java.util.Iterator;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 
 /**
@@ -31,7 +28,7 @@ import javax.net.ssl.SSLSession;
  *
  * @author <a href="mailto:alex.a.karnezis@gmail.com">Alex Karnezis</a>
  */
-public class SSLEngineServer extends SSLEngineBase {
+public class SSLEngineServer extends SSLEngineHandler {
 
     /**
      * Declares if the server is active to serve and create new connections.
@@ -64,10 +61,14 @@ public class SSLEngineServer extends SSLEngineBase {
         context.init(createKeyManagers("../com/assigment_2/Resources/server.jks", "storepass", "keypass"), createTrustManagers("../com/assigment_2/Resources/trustedCerts.jks", "storepass"), new SecureRandom());
 
         SSLSession dummySession = context.createSSLEngine().getSession();
-        myAppData = ByteBuffer.allocate(dummySession.getApplicationBufferSize());
-        myNetData = ByteBuffer.allocate(dummySession.getPacketBufferSize());
-        peerAppData = ByteBuffer.allocate(dummySession.getApplicationBufferSize());
-        peerNetData = ByteBuffer.allocate(dummySession.getPacketBufferSize());
+
+        ByteBuffer myAppData = ByteBuffer.allocate(dummySession.getApplicationBufferSize());
+        ByteBuffer myNetData = ByteBuffer.allocate(dummySession.getPacketBufferSize());
+        ByteBuffer peerAppData = ByteBuffer.allocate(dummySession.getApplicationBufferSize());
+        ByteBuffer peerNetData = ByteBuffer.allocate(dummySession.getPacketBufferSize());
+
+        setByteBuffers(myAppData, myNetData, peerAppData, peerNetData);
+
         dummySession.invalidate();
 
         selector = SelectorProvider.provider().openSelector();
@@ -120,7 +121,7 @@ public class SSLEngineServer extends SSLEngineBase {
     public void stop() {
         System.out.println("Will now close server...");
         active = false;
-        executor.shutdown();
+        exec.shutdown();
         selector.wakeup();
     }
 
@@ -134,7 +135,7 @@ public class SSLEngineServer extends SSLEngineBase {
      */
     private void accept(SelectionKey key) throws Exception {
 
-        System.out.println("New connection request.");
+        System.out.println("New connection request!");
 
         SocketChannel socketChannel = ((ServerSocketChannel) key.channel()).accept();
         socketChannel.configureBlocking(false);
