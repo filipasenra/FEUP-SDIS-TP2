@@ -1,6 +1,5 @@
 package com.assigment_2.SSLEngine;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -9,50 +8,51 @@ import java.security.SecureRandom;
 import javax.net.ssl.*;
 
 /**
- * An SSL/TLS client that connects to a server using its IP address and port.
- * <p/>
- * After initialization of a {@link SSLEngineClient} object, {@link SSLEngineClient#connect()} should be called,
- * in order to establish connection with the server.
- * <p/>
- * When the connection between the client and the object is established, {@link SSLEngineClient} provides
- * a public write and read method, in order to communicate with its peer.
+ * An SSL client for TLS Protocols.
  *
- * @author <a href="mailto:alex.a.karnezis@gmail.com">Alex Karnezis</a>
+ * This client connects to a server by a given address and port.
+ *
+ * After initialization, {@link SSLEngineClient#connect()} should be called.
+ * This will establish a connection with the server.
+ *
+ * After the connection is established, it is possible to write to the server
+ * through the {@link SSLEngineClient#write(String)} and read a message from
+ * the server through the {@link SSLEngineClient#read()}
+ *
  */
 public class SSLEngineClient extends SSLEngineHandler {
 
     /**
-     * The remote address of the server this client is configured to connect to.
+     * Server's address this client is going to connect to
      */
-    private final String remoteAddress;
+    private final String address;
 
     /**
-     * The port of the server this client is configured to connect to.
+     * Server's port this client is going to connect to
      */
     private final int port;
 
     /**
-     * The engine that will be used to encrypt/decrypt data between this client and the server.
+     * Engine that will encrypt and/or decrypt the date between the client and the server
      */
     private final SSLEngine engine;
 
     /**
-     * The socket channel that will be used as the transport link between this client and the server.
+     * The socket channel that is going to establish a non-blocking way to communication with the server.
      */
     private SocketChannel socketChannel;
 
 
     /**
-     * Initiates the engine to run as a client using peer information, and allocates space for the
-     * buffers that will be used by the engine.
+     * Prepares the client to initiate the communication with the server.
      *
-     * @param protocol The SSL/TLS protocol to be used. Java 1.6 will only run with up to TLSv1 protocol. Java 1.7 or higher also supports TLSv1.1 and TLSv1.2 protocols.
-     * @param remoteAddress The IP address of the peer.
+     * @param protocol The TLS protocol to be used. For Java 1.6 use up to TLSv1 protocol. For Java 1.7 or later can also use TLSv1.1 and TLSv1.2 protocols.
+     * @param address The address of the peer.
      * @param port The peer's port that will be used.
-     * @throws Exception
+     * @throws Exception if an error occurs.
      */
-    public SSLEngineClient(String protocol, String remoteAddress, int port) throws Exception  {
-        this.remoteAddress = remoteAddress;
+    public SSLEngineClient(String protocol, String address, int port) throws Exception  {
+        this.address = address;
         this.port = port;
 
         KeyManager[] keyManagers = createKeyManagers("../com/assigment_2/Resources/client.jks", "storepass", "keypass");
@@ -61,7 +61,7 @@ public class SSLEngineClient extends SSLEngineHandler {
         SSLContext context = SSLContext.getInstance(protocol);
         context.init(keyManagers, trustManagers, new SecureRandom());
 
-        this.engine = context.createSSLEngine(remoteAddress, port);
+        this.engine = context.createSSLEngine(address, port);
         this.engine.setUseClientMode(true);
 
         SSLSession session = engine.getSession();
@@ -76,20 +76,20 @@ public class SSLEngineClient extends SSLEngineHandler {
     }
 
     /**
-     * Opens a socket channel to communicate with the configured server and tries to complete the handshake protocol.
+     * Opens a socket channel to communicate with the server and starts the handshake protocol.
      *
-     * @return True if client established a connection with the server, false otherwise.
-     * @throws Exception
+     * @return True if the connection with the server was successful, false otherwise.
+     * @throws Exception if an error occurs.
      */
     public boolean connect() throws Exception {
 
         // Create a nonblocking socket channel
-        socketChannel = SocketChannel.open();
-        socketChannel.configureBlocking(false);
-        socketChannel.connect(new InetSocketAddress(remoteAddress, port));
+        this.socketChannel = SocketChannel.open();
+        this.socketChannel.configureBlocking(false);
+        this.socketChannel.connect(new InetSocketAddress(this.address, this.port));
 
         // Complete connection
-        while (!socketChannel.finishConnect()) {
+        while (!this.socketChannel.finishConnect()) {
             // do something until connect completed
         }
 
@@ -101,19 +101,29 @@ public class SSLEngineClient extends SSLEngineHandler {
     }
 
     /**
-     * Public method to send a message to the server.
+     * Send a message to the server
      *
-     * @param message - message to be sent to the server.
-     * @throws IOException if an I/O error occurs to the socket channel.
+     * @param message - message to sent to the server
+     * @throws Exception if an error occurs.
      */
     public void write(String message) throws Exception {
         write(socketChannel, engine, message);
     }
 
     /**
-     * Should be called when the client wants to explicitly close the connection to the server.
+     * Receive a message from the server
      *
-     * @throws IOException if an I/O error occurs to the socket channel.
+     * @throws Exception if an error occurs.
+     */
+    public void read() throws Exception {
+        read(socketChannel, engine);
+    }
+
+
+    /**
+     * Method to shutdown connection with the server
+     *
+     * @throws Exception if an error occurs.
      */
     public void shutdown() throws Exception {
 

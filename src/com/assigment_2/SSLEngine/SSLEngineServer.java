@@ -9,53 +9,57 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.security.SecureRandom;
 import java.util.Iterator;
+import java.util.Set;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
 
 /**
- * An SSL/TLS server, that will listen to a specific address and port and serve SSL/TLS connections
- * compatible with the protocol it applies.
- * <p/>
- * After initialization {@link SSLEngineServer#start()} should be called so the server starts to listen to
- * new connection requests. At this point, start is blocking, so, in order to be able to gracefully stop
- * the server, a {@link Runnable} containing a server object should be created. This runnable should
- * start the server in its run method and also provide a stop method, which will call {@link SSLEngineServer#stop()}.
- * </p>
- * SSLEngineServer makes use of Java NIO, and specifically listens to new connection requests with a {@link ServerSocketChannel}, which will
- * create new {@link SocketChannel}s and a {@link Selector} which serves all the connections in one thread.
+ * An SSL server for TLS Protocols.
  *
- * @author <a href="mailto:alex.a.karnezis@gmail.com">Alex Karnezis</a>
+ * This server will listen to a specific address and port and serve TLS connections.
+ *
+ * After initialization, {@link SSLEngineServer#start()} should be called.
+ * This will allow the server to start listening to new connection requests.
+ *
+ * A {@link Runnable} with a {@link SSLEngineServer} object should be created.
+ * The runnable (for example {@link ServerRunnable}) should start the server by calling
+ * {@link SSLEngineServer#start()} in its run method.
+ * It should also provide a stop method which will stop de server by calling {@link SSLEngineServer#stop()}
+ *
  */
 public class SSLEngineServer extends SSLEngineHandler {
 
     /**
-     * Declares if the server is active to serve and create new connections.
+     * States if the server is active
+     * It is false after {@link SSLEngineServer#stop()}
      */
     private boolean active;
 
     /**
-     * The context will be initialized with a specific SSL/TLS protocol and will then be used
-     * to create {@link SSLEngine} classes for each new connection that arrives to the server.
+     * The context will be initialized with a specific TLS protocol.
+     * Will be used to create and {@link SSLEngine} for each new connection.
+     *
      */
     private final SSLContext context;
 
     /**
-     * A part of Java NIO that will be used to serve all connections to the server in one thread.
+     *  Examines one or more Channel instances, and determines which channels are ready for reading or writing.
      */
     private final Selector selector;
 
 
     /**
-     * Server is designed to apply an SSL/TLS protocol and listen to an IP address and port.
      *
-     * @param protocol - the SSL/TLS protocol that this server will be configured to apply.
-     * @param hostAddress - the IP address this server will listen to.
-     * @param port - the port this server will listen to.
-     * @throws Exception
+     * Applies a TLS protocol prepares to listen to an address and port.
+     *
+     * @param protocol The TLS protocol to be used. For Java 1.6 use up to TLSv1 protocol. For Java 1.7 or later can also use TLSv1.1 and TLSv1.2 protocols.
+     * @param address The address of the peer.
+     * @param port The peer's port that will be used.
+     * @throws Exception if an error occurs.
      */
-    public SSLEngineServer(String protocol, String hostAddress, int port) throws Exception {
+    public SSLEngineServer(String protocol, String address, int port) throws Exception {
 
         context = SSLContext.getInstance(protocol);
         context.init(createKeyManagers("../com/assigment_2/Resources/server.jks", "storepass", "keypass"), createTrustManagers("../com/assigment_2/Resources/trustedCerts.jks", "storepass"), new SecureRandom());
@@ -74,7 +78,7 @@ public class SSLEngineServer extends SSLEngineHandler {
         selector = SelectorProvider.provider().openSelector();
         ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.configureBlocking(false);
-        serverSocketChannel.socket().bind(new InetSocketAddress(hostAddress, port));
+        serverSocketChannel.socket().bind(new InetSocketAddress(address, port));
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
         active = true;
@@ -82,62 +86,73 @@ public class SSLEngineServer extends SSLEngineHandler {
     }
 
     /**
-     * Should be called in order the server to start listening to new connections.
-     * This method will run in a loop as long as the server is active. In order to stop the server
-     * you should use {@link SSLEngineServer#stop()} which will set it to inactive state
-     * and also wake up the listener, which may be in blocking select() state.
+     * Starts listening to an address and port
      *
-     * @throws Exception
+     * @throws Exception if an error occurs.
      */
     public void start() throws Exception {
 
-        System.out.println("Initialized and waiting for new connections...");
+        System.out.println("Waiting for connections...");
 
+        //If stop wasn't called
         while (isActive()) {
+
             selector.select();
-            Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
-            while (selectedKeys.hasNext()) {
-                SelectionKey key = selectedKeys.next();
-                selectedKeys.remove();
-                if (!key.isValid()) {
-                    continue;
-                }
-                if (key.isAcceptable()) {
+
+            Set<SelectionKey> selectedKeys = selector.selectedKeys();
+            Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
+
+            while (keyIterator.hasNext()) {
+                SelectionKey key = keyIterator.next();
+
+                if(key.isAcceptable()) {
+                    // a connection was accepted by a ServerSocketChannel.
                     accept(key);
+
+                } else if (key.isConnectable()) {
+                    // a connection was established with a remote server.
+
                 } else if (key.isReadable()) {
+                    // a channel is ready for reading
                     read((SocketChannel) key.channel(), (SSLEngine) key.attachment());
+
+                } else if (key.isWritable()) {
+                    // a channel is ready for writing
                 }
+
+                keyIterator.remove();
             }
+
         }
 
-        System.out.println("Goodbye!");
+        System.out.println("Ended Connection! See you later!");
 
     }
 
     /**
-     * Sets the server to an inactive state, in order to exit the reading loop in {@link SSLEngineServer#start()}
-     * and also wakes up the selector, which may be in select() blocking state.
+     * Makes the server inactive.
+     * Allows the the reading loop in {@link SSLEngineServer#start()} to stop.
      */
     public void stop() {
-        System.out.println("Will now close server...");
-        active = false;
+        System.out.println("Closing server...");
+
         exec.shutdown();
         selector.wakeup();
+        active = false;
     }
 
     /**
-     * Will be called after a new connection request arrives to the server. Creates the {@link SocketChannel} that will
-     * be used as the network layer link, and the {@link SSLEngine} that will encrypt and decrypt all the data
-     * that will be exchanged during the session with this specific client.
+     * Handles a connection that was accepted by the {@link SocketChannel}.
      *
-     * @param key - the key dedicated to the {@link ServerSocketChannel} used by the server to listen to new connection requests.
-     * @throws Exception
+     * @param key - represents the new connection
+     * @throws Exception if an error occurs.
      */
     private void accept(SelectionKey key) throws Exception {
 
         System.out.println("New connection request!");
 
-        SocketChannel socketChannel = ((ServerSocketChannel) key.channel()).accept();
+        ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
+        SocketChannel socketChannel = serverSocketChannel.accept();
         socketChannel.configureBlocking(false);
 
         SSLEngine engine = context.createSSLEngine();
@@ -148,7 +163,7 @@ public class SSLEngineServer extends SSLEngineHandler {
             socketChannel.register(selector, SelectionKey.OP_READ, engine);
         } else {
             socketChannel.close();
-            System.out.println("Connection closed due to handshake failure.");
+            System.out.println("Failed to connect to client!");
         }
     }
 

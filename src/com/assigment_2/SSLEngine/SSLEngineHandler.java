@@ -3,7 +3,6 @@ package com.assigment_2.SSLEngine;
 import javax.net.ssl.*;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.KeyStore;
@@ -14,24 +13,29 @@ public abstract class SSLEngineHandler {
 
 
     /**
-     * Contains this peer's application data (decrypted).
-     * Will be later encrypted to be sent to the other peer using {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
+     * ByteBuffer that contains this peer's data (decrypted) to be sent to the other peer'
+     * Before sending to the other peer' it should be encrypted by using {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
      *
-     * Should be (at least) the size of the peer's outgoing data
+     * Should be (at least) the size of the outgoing data
      *
      * */
     private ByteBuffer myAppData;
 
 
     /**
-     * Contains this peer's encrypted data, that will be generated after {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
+     * ByteBuffer that contains this peer's data (encrypted) to be sent to the other peer'
+     * Generated after encrypting {@link SSLEngineHandler#myNetData} with {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
+     *
      * It should be initialized using {@link SSLSession#getPacketBufferSize()}
+     *
      * */
     private ByteBuffer myNetData;
 
 
     /**
-     * Contains the other peer's application data (decrypted)
+     * ByteBuffer that contains the other peer's data (decrypted) received from the other peer
+     * Obtain after {@link SSLEngineHandler#peerAppData} is decrypted by using {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)}
+     *
      * It Must be large enough to hold the application data from any peer.
      * It should be initialized using {@link SSLSession#getPacketBufferSize()}
      * If necessary, its size should be enlarge.
@@ -43,11 +47,11 @@ public abstract class SSLEngineHandler {
 
 
     /**
-     * Contains the other peer's encrypted data, that will be generated after {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)}
-     * It should be initialized with size of 16KB (SSL/TLS protocols specify that implementations should produce packets containing at most 16 KB of plaintext)
+     * ByteBuffer that contains the other peer's data (encrypted) received from the other peer'
+     * It should be initialized with size of 16KB
      *
-     * If the {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)} detects large inbound packets, the buffer sizes returned by SSLSession will be updated dynamically, so the this peer
-     * should check for overflow conditions and enlarge the buffer using the session's (updated) buffer size
+     * If the {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)} detects large packets,
+     * the buffer sizes returned by SSLSession will be used to updated the size dynamically.
      *
      * Check {@link SSLEngineHandler#enlargeBuffer(ByteBuffer, int)}}
      *
@@ -61,6 +65,15 @@ public abstract class SSLEngineHandler {
      * */
     protected ExecutorService exec = Executors.newSingleThreadExecutor();
 
+    /**
+     * Sets buffers with the correct values.
+     *
+     * @param myAppData - ByteBuffer that contains the other peer's data (decrypted) received from the other peer'
+     * @param myNetData - ByteBuffer that contains this peer's data (encrypted) to be sent to the other peer'
+     * @param peerAppData - ByteBuffer that contains the other peer's data (decrypted) received from the other peer'
+     * @param peerNetData - ByteBuffer that contains the other peer's data (encrypted) received from the other peer'
+     *
+     * */
     public void setByteBuffers(ByteBuffer myAppData, ByteBuffer myNetData, ByteBuffer peerAppData, ByteBuffer peerNetData) {
         this.myAppData = myAppData;
         this.myNetData = myNetData;
@@ -70,17 +83,16 @@ public abstract class SSLEngineHandler {
 
 
     /**
-     * Implements the handshake protocol between two peers.
-     * Used both at the beginning and ending of a session.
-     * @param socketChannel - SocketChannel to communicate between the peers
-     * @param engine - engine used for encryption/decryption of the data exchanged between the peers
+     * Implements the handshake protocol between this peer and the other peer'
+     * Used at the beginning and ending of an exchange
      *
-     * @return True if the connection handshake was successful or false if an error occurred.
+     * @param socketChannel - SocketChannel to communicate between this peer and the other peer'
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     *
+     * @return True if the connection was successful, false otherwise.
      *
      * */
     protected boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws Exception {
-
-
 
         int appBufferSize = engine.getSession().getApplicationBufferSize();
         ByteBuffer myAppData = ByteBuffer.allocate(appBufferSize);
@@ -125,6 +137,15 @@ public abstract class SSLEngineHandler {
 
     }
 
+    /**
+     * Handles the wrap request from the handshake
+     *
+     * @param socketChannel - SocketChannel to communicate between this peer and the other peer
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     * @param myAppData - ByteBuffer that contains the peer's data (decrypted) received from the other peer
+     *
+     * @return The HandshakeStatus result, null if error occurred.
+     * */
     private SSLEngineResult.HandshakeStatus doWrap(SocketChannel socketChannel, SSLEngine engine, ByteBuffer myAppData) throws IOException {
 
         SSLEngineResult.HandshakeStatus hs;
@@ -170,6 +191,15 @@ public abstract class SSLEngineHandler {
         return hs;
     }
 
+    /**
+     * Handles the unwrap request from the handshake
+     *
+     * @param socketChannel - SocketChannel to communicate between this peer and the other peer
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     * @param peerAppData - ByteBuffer that contains the other peer's data (decrypted) received from the other peer
+     *
+     * @return The HandshakeStatus result, null if error occurred.
+     * */
     private SSLEngineResult.HandshakeStatus doUnwrap(SocketChannel socketChannel, SSLEngine engine, ByteBuffer peerAppData) throws IOException {
 
         SSLEngineResult res;
@@ -185,7 +215,7 @@ public abstract class SSLEngineHandler {
             engine.closeInbound();
             engine.closeOutbound();
 
-            // After closeOutbound the engine will be set to WRAP state, in order to try to send a close message to the client.
+            // After closeOutbound the engine will be set to WRAP state, in order to try to send a close message to the other peer'
             return engine.getHandshakeStatus();
         }
 
@@ -231,11 +261,8 @@ public abstract class SSLEngineHandler {
      *
      * Reads a message from another peer
      *
-     * Uses {@link SocketChannel#read(ByteBuffer)}, which is non-blocking, and if
-     * it gets nothing from the peer, waits for {@code waitToReadMillis} and tries again.
-     *
-     * @param socketChannel - the transport link used between the two peers.
-     * @param engine - the engine used for encryption/decryption of the data exchanged between the two peers.
+     * @param socketChannel - SocketChannel to communicate between this peer and the other peer
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
      * @throws Exception if an error occurs.
      *
      * */
@@ -291,8 +318,8 @@ public abstract class SSLEngineHandler {
     /**
      * Will send a message to a peer
      *
-     * @param socketChannel - the transport link used between the two peers.
-     * @param engine - the engine used for encryption/decryption of the data exchanged between the two peers.
+     * @param socketChannel - SocketChannel to communicate between this peer and the other peer
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
      * @param message - the message to be sent.
      * @throws Exception if an error occurs.
      */
@@ -359,7 +386,7 @@ public abstract class SSLEngineHandler {
      * Handles {@link SSLEngineResult.Status#BUFFER_UNDERFLOW}
      *
      * @param buffer - buffer that caused the underflow
-     * @param engine - the engine used for encryption/decryption of the data exchanged between the two peers.
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
      *
      * @return The same buffer if there is no space problem or a new buffer with the same data but more space.
      *
@@ -379,7 +406,7 @@ public abstract class SSLEngineHandler {
      * Handles {@link SSLEngineResult.Status#BUFFER_OVERFLOW}
      *
      * @param buffer - buffer that caused the overflow
-     * @param engine - the engine used for encryption/decryption of the data exchanged between the two peers.
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
      *
      * @return The same buffer if there is no space problem or a new buffer with the same data but more space.
      *
@@ -394,10 +421,10 @@ public abstract class SSLEngineHandler {
 
 
     /**
-     * Handles the closure of a connection
+     * Closes a connection
      *
-     * @param socketChannel - the transport link used between the two peers.
-     * @param engine - the engine used for encryption/decryption of the data exchanged between the two peers.
+     * @param socketChannel - SocketChannel to communicate between this peer and the other peer
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
      * @throws Exception if an error occurs.
      *
      * */
@@ -408,12 +435,12 @@ public abstract class SSLEngineHandler {
     }
 
     /**
-     * Creates the key managers required to initiate the {@link SSLContext}, using a JKS keystore as an input.
+     * Creates the key managers using a JKS keystore as an input.
      *
      * @param filepath - the path to the JKS keystore.
      * @param keystorePassword - the keystore's password.
-     * @param keyPassword - the key's passsword.
-     * @return {@link KeyManager} array that will be used to initiate the {@link SSLContext}.
+     * @param keyPassword - the key's password.
+     * @return {@link KeyManager} array.
      * @throws Exception
      */
     protected KeyManager[] createKeyManagers(String filepath, String keystorePassword, String keyPassword) throws Exception {
@@ -434,15 +461,14 @@ public abstract class SSLEngineHandler {
 
 
     /**
-     * Creates the trust managers required to initiate the {@link SSLContext}, using a JKS keystore as an input.
+     * Creates the trust managers using a JKS keystore as an input.
      *
      * @param filepath - the path to the JKS keystore.
      * @param keystorePassword - the keystore's password.
-     * @return {@link TrustManager} array, that will be used to initiate the {@link SSLContext}.
+     * @return {@link TrustManager} array.
      * @throws Exception
      */
     protected TrustManager[] createTrustManagers(String filepath, String keystorePassword) throws Exception {
-
 
         // Create and initialize the SSLContext with key material
         char[] passphrase = keystorePassword.toCharArray();
