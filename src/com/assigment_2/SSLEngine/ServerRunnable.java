@@ -1,6 +1,4 @@
-package com.assigment_2;
-
-import com.assigment_2.SSLEngine.SSLEngineServer;
+package com.assigment_2.SSLEngine;
 
 public class ServerRunnable implements Runnable {
 

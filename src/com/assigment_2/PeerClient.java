@@ -1,6 +1,7 @@
 package com.assigment_2;
 
 import com.assigment_2.Chord.Node;
+import com.assigment_2.SSLEngine.ServerRunnable;
 import com.assigment_2.Storage.Storage;
 
 import java.io.*;
@@ -54,9 +55,7 @@ public class PeerClient {
         serverRunnable = new ServerRunnable(new Peer("TLSv1.2", address, port, version, id));
 
         exec.execute(serverRunnable);
-
-        //TODO: make Peer listen to messages with peer.start() in runnable
-        // adjust read function in server to behave as we'd like
+        //TODO: adjust read function in server to behave as we'd like
 
         getStorageFromFile();
 

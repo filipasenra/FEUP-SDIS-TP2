@@ -60,7 +60,7 @@ public class SSLEngineClient extends SSLEngineBase {
         this.port = port;
 
         SSLContext context = SSLContext.getInstance(protocol);
-        context.init(createKeyManagers("/home/filipasenra/Desktop/sdis1920-t2g23/src/com/assigment_2/Resources/client.jks", "storepass", "keypass"), createTrustManagers("/home/filipasenra/Desktop/sdis1920-t2g23/src/com/assigment_2/Resources/trustedCerts.jks", "storepass"), new SecureRandom());
+        context.init(createKeyManagers("../com/assigment_2/Resources/client.jks", "storepass", "keypass"), createTrustManagers("../com/assigment_2/Resources/trustedCerts.jks", "storepass"), new SecureRandom());
         engine = context.createSSLEngine(remoteAddress, port);
         engine.setUseClientMode(true);
 
@@ -97,114 +97,6 @@ public class SSLEngineClient extends SSLEngineBase {
      */
     public void write(String message) throws IOException {
         write(socketChannel, engine, message);
-    }
-
-    /**
-     * Implements the write method that sends a message to the server the client is connected to,
-     * but should not be called by the user, since socket channel and engine are inner class' variables.
-     * {@link SSLEngineClient#write(String)} should be called instead.
-     *
-     * @param message - message to be sent to the server.
-     * @param engine - the engine used for encryption/decryption of the data exchanged between the two peers.
-     * @throws IOException if an I/O error occurs to the socket channel.
-     */
-    @Override
-    protected void write(SocketChannel socketChannel, SSLEngine engine, String message) throws IOException {
-
-        System.out.println("About to write to the server...");
-
-        myAppData.clear();
-        myAppData.put(message.getBytes());
-        myAppData.flip();
-        while (myAppData.hasRemaining()) {
-            // The loop has a meaning for (outgoing) messages larger than 16KB.
-            // Every wrap call will remove 16KB from the original message and send it to the remote peer.
-            myNetData.clear();
-            SSLEngineResult result = engine.wrap(myAppData, myNetData);
-            switch (result.getStatus()) {
-                case OK:
-                    myNetData.flip();
-                    while (myNetData.hasRemaining()) {
-                        socketChannel.write(myNetData);
-                    }
-                    System.out.println("Message sent to the server: " + message);
-                    break;
-                case BUFFER_OVERFLOW:
-                    myNetData = enlargePacketBuffer(engine, myNetData);
-                    break;
-                case BUFFER_UNDERFLOW:
-                    throw new SSLException("Buffer underflow occured after a wrap. I don't think we should ever get here.");
-                case CLOSED:
-                    closeConnection(socketChannel, engine);
-                    return;
-                default:
-                    throw new IllegalStateException("Invalid SSL status: " + result.getStatus());
-            }
-        }
-
-    }
-
-    /**
-     * Public method to try to read from the server.
-     *
-     * @throws Exception
-     */
-    public void read() throws Exception {
-        read(socketChannel, engine);
-    }
-
-    /**
-     * Will wait for response from the remote peer, until it actually gets something.
-     * Uses {@link SocketChannel#read(ByteBuffer)}, which is non-blocking, and if
-     * it gets nothing from the peer, waits for {@code waitToReadMillis} and tries again.
-     * <p/>
-     * Just like {@link SSLEngineClient#read(SocketChannel, SSLEngine)} it uses inner class' socket channel
-     * and engine and should not be used by the client. {@link SSLEngineClient#read()} should be called instead.
-     *
-     * @param socketChannel - message to be sent to the server.
-     * @param engine - the engine used for encryption/decryption of the data exchanged between the two peers.
-     * @throws Exception
-     */
-    @Override
-    protected void read(SocketChannel socketChannel, SSLEngine engine) throws Exception  {
-
-        System.out.println("About to read from the server...");
-
-        peerNetData.clear();
-        int waitToReadMillis = 50;
-        boolean exitReadLoop = false;
-        while (!exitReadLoop) {
-            int bytesRead = socketChannel.read(peerNetData);
-            if (bytesRead > 0) {
-                peerNetData.flip();
-                while (peerNetData.hasRemaining()) {
-                    peerAppData.clear();
-                    SSLEngineResult result = engine.unwrap(peerNetData, peerAppData);
-                    switch (result.getStatus()) {
-                        case OK:
-                            peerAppData.flip();
-                            System.out.println("Server response: " + new String(peerAppData.array()));
-                            exitReadLoop = true;
-                            break;
-                        case BUFFER_OVERFLOW:
-                            peerAppData = enlargeApplicationBuffer(engine, peerAppData);
-                            break;
-                        case BUFFER_UNDERFLOW:
-                            peerNetData = handleBufferUnderflow(engine, peerNetData);
-                            break;
-                        case CLOSED:
-                            closeConnection(socketChannel, engine);
-                            return;
-                        default:
-                            throw new IllegalStateException("Invalid SSL status: " + result.getStatus());
-                    }
-                }
-            } else if (bytesRead < 0) {
-                handleEndOfStream(socketChannel, engine);
-                return;
-            }
-            Thread.sleep(waitToReadMillis);
-        }
     }
 
     /**

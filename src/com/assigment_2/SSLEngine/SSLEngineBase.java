@@ -60,28 +60,113 @@ public abstract class SSLEngineBase {
      */
     protected ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    protected abstract void read(SocketChannel socketChannel, SSLEngine engine) throws Exception;
+    /**
+     * Will read a message received
+     *
+     * Uses {@link SocketChannel#read(ByteBuffer)}, which is non-blocking, and if
+     * it gets nothing from the peer, waits for {@code waitToReadMillis} and tries again.
+     *
+     * @param socketChannel - the transport link used between the two peers.
+     * @param engine - the engine used for encryption/decryption of the data exchanged between the two peers.
+     * @throws IOException if an I/O error occurs to the socket channel.
+     */
+    protected void read(SocketChannel socketChannel, SSLEngine engine) throws IOException {
 
-    protected abstract void write(SocketChannel socketChannel, SSLEngine engine, String message) throws Exception;
+        System.out.println("Reading ...");
+
+        peerNetData.clear();
+        int bytesRead = socketChannel.read(peerNetData);
+        if (bytesRead > 0) {
+            peerNetData.flip();
+            while (peerNetData.hasRemaining()) {
+                peerAppData.clear();
+                SSLEngineResult result = engine.unwrap(peerNetData, peerAppData);
+                switch (result.getStatus()) {
+                    case OK:
+                        peerAppData.flip();
+                        System.out.println("RECEIVED: " + new String(peerAppData.array()));
+                        break;
+                    case BUFFER_OVERFLOW:
+                        peerAppData = enlargeApplicationBuffer(engine, peerAppData);
+                        break;
+                    case BUFFER_UNDERFLOW:
+                        peerNetData = handleBufferUnderflow(engine, peerNetData);
+                        break;
+                    case CLOSED:
+                        System.out.println("Wants to close connection");
+                        closeConnection(socketChannel, engine);
+                        System.out.println("Closed connection");
+                        return;
+                    default:
+                        throw new IllegalStateException("Invalid SSL status: " + result.getStatus());
+                }
+            }
+
+        } else if (bytesRead < 0) {
+            System.err.println("Received end of stream. Closing connection.");
+            handleEndOfStream(socketChannel, engine);
+            System.out.println("Closed connection.");
+        }
+    }
+
+    /**
+     * Will send a message to a peer
+     *
+     * @param socketChannel - the transport link used between the two peers.
+     * @param engine - the engine used for encryption/decryption of the data exchanged between the two peers.
+     * @param message - the message to be sent.
+     * @throws IOException if an I/O error occurs to the socket channel.
+     */
+    protected void write(SocketChannel socketChannel, SSLEngine engine, String message) throws IOException {
+
+        System.out.println("Writing...");
+
+        myAppData.clear();
+        myAppData.put(message.getBytes());
+        myAppData.flip();
+        while (myAppData.hasRemaining()) {
+            // The loop has a meaning for (outgoing) messages larger than 16KB.
+            // Every wrap call will remove 16KB from the original message and send it to the remote peer.
+            myNetData.clear();
+            SSLEngineResult result = engine.wrap(myAppData, myNetData);
+            switch (result.getStatus()) {
+                case OK:
+                    myNetData.flip();
+                    while (myNetData.hasRemaining()) {
+                        socketChannel.write(myNetData);
+                    }
+                    System.out.println("SENT:" + message);
+                    break;
+                case BUFFER_OVERFLOW:
+                    myNetData = enlargePacketBuffer(engine, myNetData);
+                    break;
+                case BUFFER_UNDERFLOW:
+                    throw new SSLException("Buffer underflow occured after a wrap.");
+                case CLOSED:
+                    closeConnection(socketChannel, engine);
+                    return;
+                default:
+                    throw new IllegalStateException("Invalid SSL status: " + result.getStatus());
+            }
+        }
+    }
 
     /**
      * Implements the handshake protocol between two peers, required for the establishment of the SSL/TLS connection.
      * During the handshake, encryption configuration information - such as the list of available cipher suites - will be exchanged
      * and if the handshake is successful will lead to an established SSL/TLS session.
      *
-     * <p/>
+     *
      * A typical handshake will usually contain the following steps:
      *
-     * <ul>
-     *   <li>1. wrap:     ClientHello</li>
-     *   <li>2. unwrap:   ServerHello/Cert/ServerHelloDone</li>
-     *   <li>3. wrap:     ClientKeyExchange</li>
-     *   <li>4. wrap:     ChangeCipherSpec</li>
-     *   <li>5. wrap:     Finished</li>
-     *   <li>6. unwrap:   ChangeCipherSpec</li>
-     *   <li>7. unwrap:   Finished</li>
-     * </ul>
-     * <p/>
+     *   1. wrap:     ClientHello
+     *   2. unwrap:   ServerHello/Cert/ServerHelloDone
+     *   3. wrap:     ClientKeyExchange
+     *   4. wrap:     ChangeCipherSpec
+     *   5. wrap:     Finished
+     *   6. unwrap:   ChangeCipherSpec
+     *   7. unwrap:   Finished
+     *
      * Handshake is also used during the end of the session, in order to properly close the connection between the two peers.
      * A proper connection close will typically include the one peer sending a CLOSE message to another, and then wait for
      * the other's CLOSE message to close the transport link. The other peer from his perspective would read a CLOSE message
@@ -186,7 +271,7 @@ public abstract class SSLEngineBase {
                             myNetData = enlargePacketBuffer(engine, myNetData);
                             break;
                         case BUFFER_UNDERFLOW:
-                            throw new SSLException("Buffer underflow occured after a wrap. I don't think we should ever get here.");
+                            throw new SSLException("Buffer underflow occured after a wrap.");
                         case CLOSED:
                             try {
                                 myNetData.flip();
@@ -233,7 +318,7 @@ public abstract class SSLEngineBase {
     }
 
     /**
-     * Compares <code>sessionProposedCapacity<code> with buffer's capacity. If buffer's capacity is smaller,
+     * Compares sessionProposedCapacity with buffer's capacity. If buffer's capacity is smaller,
      * returns a buffer with the proposed capacity. If it's equal or larger, returns a buffer
      * with capacity twice the size of the initial one.
      *
