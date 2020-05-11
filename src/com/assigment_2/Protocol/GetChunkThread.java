@@ -78,7 +78,9 @@ public class GetChunkThread implements Runnable {
             } else {
 
                 System.out.println(" > SENDING MESSAGE: " + version + " CHUNK " + senderId + " " + fileId + " " + chunkNo);
-                PeerClient.getExec().execute(new Thread(() -> PeerClient.getMDR().sendMessage(message)));
+
+                //TODO: change this
+                //PeerClient.getExec().execute(new Thread(() -> PeerClient.getMDR().sendMessage(message)));
             }
         }
     }
@@ -86,7 +88,9 @@ public class GetChunkThread implements Runnable {
     public void sendTCPMessage(byte[] message){
 
         System.out.println(" > SENDING MESSAGE: " + version + " PORT " + senderId + " " + fileId + " " + chunkNo);
-        PeerClient.getExec().execute(new Thread(() -> PeerClient.getMDR().sendMessage(message)));
+
+        //TODO: change this
+        //PeerClient.getExec().execute(new Thread(() -> PeerClient.getMDR().sendMessage(message)));
 
     }
 }

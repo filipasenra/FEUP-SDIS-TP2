@@ -61,7 +61,7 @@ public class SSLEngineServer extends SSLEngineBase {
     public SSLEngineServer(String protocol, String hostAddress, int port) throws Exception {
 
         context = SSLContext.getInstance(protocol);
-        context.init(createKeyManagers("./src/main/resources/server.jks", "storepass", "keypass"), createTrustManagers("./src/main/resources/trustedCerts.jks", "storepass"), new SecureRandom());
+        context.init(createKeyManagers("/home/filipasenra/Desktop/sdis1920-t2g23/src/com/assigment_2/Resources/server.jks", "storepass", "keypass"), createTrustManagers("/home/filipasenra/Desktop/sdis1920-t2g23/src/com/assigment_2/Resources/trustedCerts.jks", "storepass"), new SecureRandom());
 
         SSLSession dummySession = context.createSSLEngine().getSession();
         myAppData = ByteBuffer.allocate(dummySession.getApplicationBufferSize());

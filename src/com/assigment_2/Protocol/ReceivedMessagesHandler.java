@@ -121,7 +121,8 @@ public class ReceivedMessagesHandler implements Runnable {
 
         System.out.println(" > RECEIVED: " + this.messageFactory.version + " " + this.messageFactory.messageType + " " + this.messageFactory.senderId + " " + this.messageFactory.fileId + " " + this.messageFactory.chunkNo);
 
-        PeerClient.getMDR().sendChunk(this.messageFactory.version, this.messageFactory.fileId, this.messageFactory.chunkNo);
+        //TODO: change this
+        //PeerClient.getMDR().sendChunk(this.messageFactory.version, this.messageFactory.fileId, this.messageFactory.chunkNo);
 
     }
 

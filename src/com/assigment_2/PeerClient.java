@@ -13,7 +13,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 public class PeerClient {
 
     private static final int M = 8;
-    private static Peer peer;
+    private static ServerRunnable serverRunnable;
     private final static String serializeObjectName = "Storage";
     static private Double version;
     private static String id;
@@ -49,9 +49,11 @@ public class PeerClient {
         address = args[2];
         port = Integer.parseInt(args[3]);
 
-        peer = new Peer("TLSv1.2", address, port, version, id);
-
         node = new Node(address, port, M);
+
+        serverRunnable = new ServerRunnable(new Peer("TLSv1.2", address, port, version, id));
+
+        exec.execute(serverRunnable);
 
         //TODO: make Peer listen to messages with peer.start() in runnable
         // adjust read function in server to behave as we'd like
@@ -80,6 +82,8 @@ public class PeerClient {
 
     //saves this peer storage in a file called storage.ser
     private static void saveStorageIntoFile() {
+
+        serverRunnable.stop();
 
         try {
             String filename = PeerClient.getId() + "/" + serializeObjectName + ".ser";

@@ -16,7 +16,7 @@ public class TestApp {
 
     private static boolean parseArgs(String[] args) throws Exception {
 
-        if(args.length < 2)
+        if(args.length < 3)
         {
             System.err.println("usage: TestApp <address> <port> <sub_protocol> <arguments_of_protocol>\n" +
                     "Protocols available: BACKUP, RESTORE, DELETE, RECLAIM, STATE");

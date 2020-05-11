@@ -60,7 +60,7 @@ public class SSLEngineClient extends SSLEngineBase {
         this.port = port;
 
         SSLContext context = SSLContext.getInstance(protocol);
-        context.init(createKeyManagers("./src/main/resources/client.jks", "storepass", "keypass"), createTrustManagers("./src/main/resources/trustedCerts.jks", "storepass"), new SecureRandom());
+        context.init(createKeyManagers("/home/filipasenra/Desktop/sdis1920-t2g23/src/com/assigment_2/Resources/client.jks", "storepass", "keypass"), createTrustManagers("/home/filipasenra/Desktop/sdis1920-t2g23/src/com/assigment_2/Resources/trustedCerts.jks", "storepass"), new SecureRandom());
         engine = context.createSSLEngine(remoteAddress, port);
         engine.setUseClientMode(true);
 

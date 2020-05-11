@@ -36,6 +36,7 @@ public class TestAppHandler extends SSLEngineClient {
             this.connect();
 
             this.write("OLA");
+            this.read();
 
             this.shutdown();
 

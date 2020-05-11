@@ -37,7 +37,8 @@ public class PutChunkThread implements Runnable {
             System.out.println("\t\tNext Delay: " + this.delay);
             System.out.println();
 
-            PeerClient.getExec().execute(new Thread(() -> PeerClient.getMDB().sendMessage(message)));
+            //TODO: change this
+            // PeerClient.getExec().execute(new Thread(() -> PeerClient.getMDB().sendMessage(message)));
 
            if (this.counter < 5) {
                 PeerClient.getExec().schedule(this, this.delay, TimeUnit.SECONDS);
