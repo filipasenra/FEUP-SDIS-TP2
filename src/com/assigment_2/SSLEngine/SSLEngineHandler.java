@@ -112,7 +112,7 @@ public abstract class SSLEngineHandler {
 
                     break;
                 case NEED_WRAP:
-                    if((handshakeStatus = doWrap(socketChannel, engine)) == null)
+                    if((handshakeStatus = write(socketChannel, engine)) == null)
                         return false;
 
                     break;
@@ -267,7 +267,7 @@ public abstract class SSLEngineHandler {
         int num = socketChannel.read(peerNetData);
         if (num < 0) {
 
-            if(engine.isInboundDone() && engine.isOutboundDone()){
+            if (engine.isInboundDone() && engine.isOutboundDone()) {
                 return;
             }
 
@@ -281,74 +281,20 @@ public abstract class SSLEngineHandler {
             // Process incoming data
 
             peerNetData.flip();
-            while (peerNetData.hasRemaining()) {
-                peerAppData.clear();
-                SSLEngineResult res = engine.unwrap(peerNetData, peerAppData);
-
-                switch (res.getStatus()) {
-                    case OK:
-                        peerAppData.flip();
-                        System.out.println("RECEIVED: " + new String(peerAppData.array()));
-                        break;
-                    case BUFFER_OVERFLOW:
-                        peerAppData = enlargeApplicationBuffer(peerAppData, engine);
-                        break;
-                    case BUFFER_UNDERFLOW:
-                        peerNetData = handleBufferUnderflow(peerNetData, engine);
-                        break;
-                    case CLOSED:
-                        System.out.println("Wants to close connection");
-                        closeConnection(socketChannel, engine);
-                        System.out.println("Closed connection");
-                        return;
-                    default:
-                        throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
-                }
-            }
-        }
-
-    }
-
-
-    /**
-     * Will send a message to a peer
-     *
-     * @param socketChannel - SocketChannel to communicate between this peer and the other peer
-     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
-     * @param message - the message to be sent.
-     * @throws Exception if an error occurs.
-     */
-    protected void write(SocketChannel socketChannel, SSLEngine engine, String message) throws Exception {
-
-        System.out.println("Writting...");
-
-        myAppData.clear();
-        myAppData.put(message.getBytes());
-        myAppData.flip();
-
-        while(myAppData.hasRemaining()){
-
-            // Generate TLS encoded data (handshake or application data)
-            myNetData.clear();
-            SSLEngineResult res = engine.wrap(myAppData, myNetData);
+            peerAppData.clear();
+            SSLEngineResult res = engine.unwrap(peerNetData, peerAppData);
 
             switch (res.getStatus()) {
                 case OK:
-
-                    myNetData.flip();
-
-                    //Write until it fails
-                    while (myNetData.hasRemaining()) {
-                        socketChannel.write(myNetData);
-                    }
-
-                    System.out.println("SENT:" + message);
+                    peerAppData.flip();
+                    System.out.println("RECEIVED: " + new String(peerAppData.array()));
                     break;
                 case BUFFER_OVERFLOW:
-                    myNetData = enlargePacketBuffer(myNetData, engine);
+                    peerAppData = enlargeApplicationBuffer(peerAppData, engine);
                     break;
                 case BUFFER_UNDERFLOW:
-                    throw new SSLException("Buffer underflow occurred after a wrap.");
+                    peerNetData = handleBufferUnderflow(peerNetData, engine);
+                    break;
                 case CLOSED:
                     System.out.println("Wants to close connection");
                     closeConnection(socketChannel, engine);
@@ -359,6 +305,59 @@ public abstract class SSLEngineHandler {
             }
         }
 
+    }
+
+
+    protected void write(SocketChannel socketChannel, SSLEngine engine, String message) throws Exception {
+
+        System.out.println("Writting...");
+
+        myAppData.clear();
+        myAppData.put(message.getBytes());
+        myAppData.flip();
+
+        if (write(socketChannel, engine) != null)
+            System.out.println("SENT: " + message);
+    }
+        /**
+         * Will send a message to a peer
+         *
+         * @param socketChannel - SocketChannel to communicate between this peer and the other peer
+         * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+         * @throws Exception if an error occurs.
+         * @return
+         */
+    protected SSLEngineResult.HandshakeStatus write(SocketChannel socketChannel, SSLEngine engine) throws Exception {
+
+        // Generate TLS encoded data (handshake or application data)
+        myNetData.clear();
+        SSLEngineResult res = engine.wrap(myAppData, myNetData);
+
+        switch (res.getStatus()) {
+            case OK:
+                myNetData.flip();
+
+                //Write until it fails
+                while (myNetData.hasRemaining()) {
+                    socketChannel.write(myNetData);
+                }
+
+                break;
+            case BUFFER_OVERFLOW:
+                myNetData = enlargePacketBuffer(myNetData, engine);
+                break;
+            case BUFFER_UNDERFLOW:
+                throw new SSLException("Buffer underflow occurred after a wrap.");
+            case CLOSED:
+                System.out.println("Wants to close connection");
+                closeConnection(socketChannel, engine);
+                System.out.println("Closed connection");
+                return null;
+            default:
+                throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
+        }
+
+        return res.getHandshakeStatus();
     }
 
     /**
