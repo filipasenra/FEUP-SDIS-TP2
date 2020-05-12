@@ -350,7 +350,9 @@ public abstract class SSLEngineHandler {
                 case BUFFER_UNDERFLOW:
                     throw new SSLException("Buffer underflow occurred after a wrap.");
                 case CLOSED:
+                    System.out.println("Wants to close connection");
                     closeConnection(socketChannel, engine);
+                    System.out.println("Closed connection");
                     return;
                 default:
                     throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
