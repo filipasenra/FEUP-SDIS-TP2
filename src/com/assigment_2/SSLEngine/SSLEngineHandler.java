@@ -107,7 +107,7 @@ public abstract class SSLEngineHandler {
 
             switch (handshakeStatus) {
                 case NEED_UNWRAP:
-                    if((handshakeStatus = doUnwrap(socketChannel, engine)) == null)
+                    if((handshakeStatus = read(socketChannel, engine)) == null)
                         return false;
 
                     break;
@@ -257,9 +257,9 @@ public abstract class SSLEngineHandler {
      * @throws Exception if an error occurs.
      *
      * */
-    protected void read(SocketChannel socketChannel, SSLEngine engine) throws Exception {
+    protected SSLEngineResult.HandshakeStatus read(SocketChannel socketChannel, SSLEngine engine) throws Exception {
 
-        peerNetData.clear();
+        //peerNetData.clear();
 
         System.out.println("Reading...");
 
@@ -268,42 +268,45 @@ public abstract class SSLEngineHandler {
         if (num < 0) {
 
             if (engine.isInboundDone() && engine.isOutboundDone()) {
-                return;
+                return null;
             }
 
             System.out.println("Received end of stream. Closing connection.");
             engine.closeInbound();
             closeConnection(socketChannel, engine);
 
-        } else if (num == 0) {
-            System.out.println("No bytes read. Try again later!");
-        } else {
-            // Process incoming data
+            return null;
 
-            peerNetData.flip();
-            peerAppData.clear();
-            SSLEngineResult res = engine.unwrap(peerNetData, peerAppData);
-
-            switch (res.getStatus()) {
-                case OK:
-                    peerAppData.flip();
-                    System.out.println("RECEIVED: " + new String(peerAppData.array()));
-                    break;
-                case BUFFER_OVERFLOW:
-                    peerAppData = enlargeApplicationBuffer(peerAppData, engine);
-                    break;
-                case BUFFER_UNDERFLOW:
-                    peerNetData = handleBufferUnderflow(peerNetData, engine);
-                    break;
-                case CLOSED:
-                    System.out.println("Wants to close connection");
-                    closeConnection(socketChannel, engine);
-                    System.out.println("Closed connection");
-                    return;
-                default:
-                    throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
-            }
         }
+
+        // Process incoming data
+
+        peerNetData.flip();
+        //peerAppData.clear();
+        SSLEngineResult res = engine.unwrap(peerNetData, peerAppData);
+        peerNetData.compact();
+
+        switch (res.getStatus()) {
+            case OK:
+                //peerAppData.flip();
+                //System.out.println("RECEIVED: " + new String(peerAppData.array()));
+                break;
+            case BUFFER_OVERFLOW:
+                peerAppData = enlargeApplicationBuffer(peerAppData, engine);
+                break;
+            case BUFFER_UNDERFLOW:
+                peerNetData = handleBufferUnderflow(peerNetData, engine);
+                break;
+            case CLOSED:
+                System.out.println("Wants to close connection");
+                closeConnection(socketChannel, engine);
+                System.out.println("Closed connection");
+                break;
+            default:
+                throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
+        }
+
+        return res.getHandshakeStatus();
 
     }
 
