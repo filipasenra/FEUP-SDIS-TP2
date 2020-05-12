@@ -66,9 +66,9 @@ public class SSLEngineClient extends SSLEngineHandler {
 
         SSLSession session = engine.getSession();
 
-        ByteBuffer myAppData = ByteBuffer.allocate(1024);
+        ByteBuffer myAppData = ByteBuffer.allocate(session.getApplicationBufferSize());
+        ByteBuffer peerAppData = ByteBuffer.allocate(session.getApplicationBufferSize());
         ByteBuffer myNetData = ByteBuffer.allocate(session.getPacketBufferSize());
-        ByteBuffer peerAppData = ByteBuffer.allocate(1024);
         ByteBuffer peerNetData = ByteBuffer.allocate(session.getPacketBufferSize());
 
         setByteBuffers(myAppData, myNetData, peerAppData, peerNetData);
