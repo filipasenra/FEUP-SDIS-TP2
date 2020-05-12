@@ -7,6 +7,8 @@ import java.security.SecureRandom;
 
 import javax.net.ssl.*;
 
+import static javax.net.ssl.SSLEngineResult.Status.OK;
+
 /**
  * An SSL client for TLS Protocols.
  *
@@ -107,7 +109,13 @@ public class SSLEngineClient extends SSLEngineHandler {
      * @throws Exception if an error occurs.
      */
     public void write(String message) throws Exception {
-        write(socketChannel, engine, message);
+
+        SSLEngineResult res;
+        if ((res = write(socketChannel, engine, message)) != null) {
+
+            if (res.getStatus() == OK)
+                System.out.println("PRINT: " + message);
+        }
     }
 
     /**
@@ -116,7 +124,13 @@ public class SSLEngineClient extends SSLEngineHandler {
      * @throws Exception if an error occurs.
      */
     public void read() throws Exception {
-        read(socketChannel, engine);
+
+        SSLEngineResult res;
+        if ((res = read(socketChannel, engine)) != null) {
+
+            if (res.getStatus() == OK)
+                System.out.println("PRINT: " + this.peerNetData);
+        }
     }
 
 
