@@ -15,59 +15,65 @@ public abstract class SSLEngineHandler {
     /**
      * ByteBuffer that contains this peer's data (decrypted) to be sent to the other peer'
      * Before sending to the other peer' it should be encrypted by using {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
-     * <p>
+     *
      * Should be (at least) the size of the outgoing data
-     */
+     *
+     * */
     private ByteBuffer myAppData;
 
 
     /**
      * ByteBuffer that contains this peer's data (encrypted) to be sent to the other peer'
-     * Generated after encrypting {SSLEngineHandler#myNetData} with {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
-     * <p>
+     * Generated after encrypting {@link SSLEngineHandler#myNetData} with {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
+     *
      * It should be initialized using {@link SSLSession#getPacketBufferSize()}
-     */
+     *
+     * */
     private ByteBuffer myNetData;
 
 
     /**
      * ByteBuffer that contains the other peer's data (decrypted) received from the other peer
-     * Obtain after {SSLEngineHandler#peerAppData} is decrypted by using {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)}
-     * <p>
+     * Obtain after {@link SSLEngineHandler#peerAppData} is decrypted by using {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)}
+     *
      * It Must be large enough to hold the application data from any peer.
      * It should be initialized using {@link SSLSession#getPacketBufferSize()}
      * If necessary, its size should be enlarge.
-     * <p>
+     *
      * Check {@link SSLEngineHandler#enlargeBuffer(ByteBuffer, int)}
-     */
+     *
+     * */
     private ByteBuffer peerAppData;
 
 
     /**
      * ByteBuffer that contains the other peer's data (encrypted) received from the other peer'
      * It should be initialized with size of 16KB
-     * <p>
+     *
      * If the {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)} detects large packets,
      * the buffer sizes returned by SSLSession will be used to updated the size dynamically.
-     * <p>
+     *
      * Check {@link SSLEngineHandler#enlargeBuffer(ByteBuffer, int)}}
-     */
-    protected ByteBuffer peerNetData;
+     *
+     * */
+    private ByteBuffer peerNetData;
 
 
     /**
      * Handles tasks that may pop up during {@link SSLEngine#beginHandshake()}
-     */
+     *
+     * */
     protected ExecutorService exec = Executors.newSingleThreadExecutor();
 
     /**
      * Sets buffers with the correct values.
      *
-     * @param myAppData   - ByteBuffer that contains the other peer's data (decrypted) received from the other peer'
-     * @param myNetData   - ByteBuffer that contains this peer's data (encrypted) to be sent to the other peer'
+     * @param myAppData - ByteBuffer that contains the other peer's data (decrypted) received from the other peer'
+     * @param myNetData - ByteBuffer that contains this peer's data (encrypted) to be sent to the other peer'
      * @param peerAppData - ByteBuffer that contains the other peer's data (decrypted) received from the other peer'
      * @param peerNetData - ByteBuffer that contains the other peer's data (encrypted) received from the other peer'
-     */
+     *
+     * */
     public void setByteBuffers(ByteBuffer myAppData, ByteBuffer myNetData, ByteBuffer peerAppData, ByteBuffer peerNetData) {
         this.myAppData = myAppData;
         this.myNetData = myNetData;
@@ -81,9 +87,11 @@ public abstract class SSLEngineHandler {
      * Used at the beginning and ending of an exchange
      *
      * @param socketChannel - SocketChannel to communicate between this peer and the other peer'
-     * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     *
      * @return True if the connection was successful, false otherwise.
-     */
+     *
+     * */
     protected boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws Exception {
 
         myNetData.clear();
@@ -95,22 +103,17 @@ public abstract class SSLEngineHandler {
         SSLEngineResult.HandshakeStatus handshakeStatus = engine.getHandshakeStatus();
         while (handshakeStatus != SSLEngineResult.HandshakeStatus.FINISHED && handshakeStatus != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
 
-            SSLEngineResult res;
+            System.out.println(handshakeStatus);
 
             switch (handshakeStatus) {
                 case NEED_UNWRAP:
-
-                    if ((res = read(socketChannel, engine)) == null)
+                    if((handshakeStatus = doUnwrap(socketChannel, engine)) == null)
                         return false;
-
-                    handshakeStatus = res.getHandshakeStatus();
 
                     break;
                 case NEED_WRAP:
-                    if ((res = write(socketChannel, engine)) == null)
+                    if((handshakeStatus = doWrap(socketChannel, engine)) == null)
                         return false;
-
-                    handshakeStatus = res.getHandshakeStatus();
 
                     break;
                 case NEED_TASK:
@@ -133,20 +136,68 @@ public abstract class SSLEngineHandler {
     }
 
     /**
-     * Reads a message from another peer
+     * Handles the wrap request from the handshake
      *
      * @param socketChannel - SocketChannel to communicate between this peer and the other peer
-     * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
-     * @throws Exception if an error occurs.
-     */
-    protected SSLEngineResult read(SocketChannel socketChannel, SSLEngine engine) throws Exception {
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     *
+     * @return The HandshakeStatus result, null if error occurred.
+     * */
+    private SSLEngineResult.HandshakeStatus doWrap(SocketChannel socketChannel, SSLEngine engine) throws IOException {
 
+        SSLEngineResult.HandshakeStatus hs;
+        // Empty the local network packet buffer.
         myNetData.clear();
-        int num = socketChannel.read(peerNetData);
+
+        // Generate handshaking data
+        SSLEngineResult res = engine.wrap(myAppData, myNetData);
+        hs = res.getHandshakeStatus();
+
+
+        System.out.println(res.getStatus());
+        // Check status
+        switch (res.getStatus()) {
+            case OK:
+                myNetData.flip();
+
+                // Send the handshaking data to peer
+                while (myNetData.hasRemaining()) {
+                    socketChannel.write(myNetData);
+                }
+                break;
+
+            case BUFFER_OVERFLOW:
+                // Will occur if there is not enough space in myNetData buffer to write all the data that would be generated by the method wrap.
+                myNetData = enlargePacketBuffer(myNetData, engine);
+                break;
+            case BUFFER_UNDERFLOW:
+                throw new SSLException("Buffer underflow occurred after a wrap.");
+            case CLOSED:
+                System.out.println("Wants to close connection");
+                closeConnection(socketChannel, engine);
+                System.out.println("Closed connection");
+                break;
+            default:
+                throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
+        }
+
+        return hs;
+    }
+
+    /**
+     * Handles the unwrap request from the handshake
+     *
+     * @param socketChannel - SocketChannel to communicate between this peer and the other peer
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     *
+     * @return The HandshakeStatus result, null if error occurred.
+     * */
+    private SSLEngineResult.HandshakeStatus doUnwrap(SocketChannel socketChannel, SSLEngine engine) throws Exception {
+
         // Receive handshaking data from peer
-        if (num < 0) {
+        if (socketChannel.read(peerNetData) < 0) {
             // The channel has reached end-of-stream
-            if (engine.isInboundDone() && engine.isOutboundDone()) {
+            if(engine.isInboundDone() && engine.isOutboundDone()){
                 return null;
             }
 
@@ -158,12 +209,15 @@ public abstract class SSLEngineHandler {
             return null;
         }
 
-
         // Process incoming handshaking data
         peerNetData.flip();
+
         SSLEngineResult res = engine.unwrap(peerNetData, peerAppData);
         peerNetData.compact();
 
+        SSLEngineResult.HandshakeStatus hs = res.getHandshakeStatus();
+
+        System.out.println(res.getStatus());
         // Check status
         switch (res.getStatus()) {
             case OK:
@@ -190,19 +244,68 @@ public abstract class SSLEngineHandler {
                 throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
         }
 
-        return res;
+        return hs;
 
     }
 
-    protected SSLEngineResult write(SocketChannel socketChannel, SSLEngine engine, String message) throws Exception {
+    /**
+     *
+     * Reads a message from another peer
+     *
+     * @param socketChannel - SocketChannel to communicate between this peer and the other peer
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     * @throws Exception if an error occurs.
+     *
+     * */
+    protected void read(SocketChannel socketChannel, SSLEngine engine) throws Exception {
 
-        System.out.println("Writting...");
+        peerNetData.clear();
 
-        myAppData.clear();
-        myAppData.put(message.getBytes());
-        this.myAppData.flip();
+        System.out.println("Reading...");
 
-        return write(socketChannel, engine);
+        // Read TLS encoded data from peer
+        int num = socketChannel.read(peerNetData);
+        if (num < 0) {
+
+            if(engine.isInboundDone() && engine.isOutboundDone()){
+                return;
+            }
+
+            System.out.println("Received end of stream. Closing connection.");
+            engine.closeInbound();
+            closeConnection(socketChannel, engine);
+
+        } else if (num == 0) {
+            System.out.println("No bytes read. Try again later!");
+        } else {
+            // Process incoming data
+
+            peerNetData.flip();
+            while (peerNetData.hasRemaining()) {
+                peerAppData.clear();
+                SSLEngineResult res = engine.unwrap(peerNetData, peerAppData);
+
+                switch (res.getStatus()) {
+                    case OK:
+                        peerAppData.flip();
+                        System.out.println("RECEIVED: " + new String(peerAppData.array()));
+                        break;
+                    case BUFFER_OVERFLOW:
+                        peerAppData = enlargeApplicationBuffer(peerAppData, engine);
+                        break;
+                    case BUFFER_UNDERFLOW:
+                        peerNetData = handleBufferUnderflow(peerNetData, engine);
+                        break;
+                    case CLOSED:
+                        System.out.println("Wants to close connection");
+                        closeConnection(socketChannel, engine);
+                        System.out.println("Closed connection");
+                        return;
+                    default:
+                        throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
+                }
+            }
+        }
 
     }
 
@@ -211,52 +314,59 @@ public abstract class SSLEngineHandler {
      * Will send a message to a peer
      *
      * @param socketChannel - SocketChannel to communicate between this peer and the other peer
-     * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
-     *                      //@param message - the message to be sent.
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     * @param message - the message to be sent.
      * @throws Exception if an error occurs.
      */
-    private SSLEngineResult write(SocketChannel socketChannel, SSLEngine engine) throws Exception {
+    protected void write(SocketChannel socketChannel, SSLEngine engine, String message) throws Exception {
 
+        System.out.println("Writting...");
 
-        // Generate TLS encoded data (handshake or application data)
-        myNetData.clear();
-        SSLEngineResult res = engine.wrap(myAppData, myNetData);
+        myAppData.clear();
+        myAppData.put(message.getBytes());
+        myAppData.flip();
 
-        switch (res.getStatus()) {
-            case OK:
+        while(myAppData.hasRemaining()){
 
-                myNetData.flip();
+            // Generate TLS encoded data (handshake or application data)
+            myNetData.clear();
+            SSLEngineResult res = engine.wrap(myAppData, myNetData);
 
-                //Write until it fails
-                while (myNetData.hasRemaining()) {
-                    socketChannel.write(myNetData);
-                }
+            switch (res.getStatus()) {
+                case OK:
 
-                break;
-            case BUFFER_OVERFLOW:
-                myNetData = enlargePacketBuffer(myNetData, engine);
-                break;
-            case BUFFER_UNDERFLOW:
-                throw new SSLException("Buffer underflow occurred after a wrap.");
-            case CLOSED:
-                closeConnection(socketChannel, engine);
-                break;
-            default:
-                throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
+                    myNetData.flip();
+
+                    //Write until it fails
+                    while (myNetData.hasRemaining()) {
+                        socketChannel.write(myNetData);
+                    }
+
+                    System.out.println("SENT:" + message);
+                    break;
+                case BUFFER_OVERFLOW:
+                    myNetData = enlargePacketBuffer(myNetData, engine);
+                    break;
+                case BUFFER_UNDERFLOW:
+                    throw new SSLException("Buffer underflow occurred after a wrap.");
+                case CLOSED:
+                    closeConnection(socketChannel, engine);
+                    return;
+                default:
+                    throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
+            }
         }
-
-
-        return res;
 
     }
 
     /**
      * Enlarges a buffer, when overflow happens or underflow
      *
-     * @param buffer                  - buffer to be enlarge
+     * @param buffer - buffer to be enlarge
      * @param sessionProposedCapacity - recommended size by the engine's session
+     *
      * @return The same buffer if there is no space problem or a new buffer with the same data but more space.
-     */
+     * */
     protected ByteBuffer enlargeBuffer(ByteBuffer buffer, int sessionProposedCapacity) {
         if (sessionProposedCapacity > buffer.capacity()) {
             buffer = ByteBuffer.allocate(sessionProposedCapacity);
@@ -271,8 +381,10 @@ public abstract class SSLEngineHandler {
      *
      * @param buffer - buffer that caused the underflow
      * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     *
      * @return The same buffer if there is no space problem or a new buffer with the same data but more space.
-     */
+     *
+     * */
     protected ByteBuffer handleBufferUnderflow(ByteBuffer buffer, SSLEngine engine) {
         if (engine.getSession().getPacketBufferSize() < buffer.limit()) {
             return buffer;
@@ -289,23 +401,26 @@ public abstract class SSLEngineHandler {
      *
      * @param buffer - buffer that caused the overflow
      * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     *
      * @return The same buffer if there is no space problem or a new buffer with the same data but more space.
-     */
+     *
+     * */
     protected ByteBuffer enlargePacketBuffer(ByteBuffer buffer, SSLEngine engine) {
-        return enlargeBuffer(buffer, engine.getSession().getPacketBufferSize());
+        return  enlargeBuffer(buffer, engine.getSession().getPacketBufferSize());
     }
 
     protected ByteBuffer enlargeApplicationBuffer(ByteBuffer buffer, SSLEngine engine) {
-        return enlargeBuffer(buffer, engine.getSession().getApplicationBufferSize());
+        return  enlargeBuffer(buffer, engine.getSession().getApplicationBufferSize());
     }
 
     /**
      * Closes a connection
      *
      * @param socketChannel - SocketChannel to communicate between this peer and the other peer
-     * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
-     * @throws IOException if an error occurs.
-     */
+     * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     * @throws Exception if an error occurs.
+     *
+     * */
     protected void closeConnection(SocketChannel socketChannel, SSLEngine engine) throws IOException {
         // Indicate that application is done with engine
         engine.closeOutbound();
@@ -316,9 +431,6 @@ public abstract class SSLEngineHandler {
 
             // Generate handshaking data
             SSLEngineResult res = engine.wrap(myAppData, myNetData);
-
-            if (res.getStatus() == SSLEngineResult.Status.CLOSED)
-                break;
 
             //flipping from reading to writing
             myNetData.flip();
@@ -338,11 +450,11 @@ public abstract class SSLEngineHandler {
     /**
      * Creates the key managers using a JKS keystore as an input.
      *
-     * @param filepath         - the path to the JKS keystore.
+     * @param filepath - the path to the JKS keystore.
      * @param keystorePassword - the keystore's password.
-     * @param keyPassword      - the key's password.
+     * @param keyPassword - the key's password.
      * @return {@link KeyManager} array.
-     * @throws Exception if an error occurs.
+     * @throws Exception
      */
     protected KeyManager[] createKeyManagers(String filepath, String keystorePassword, String keyPassword) throws Exception {
 
@@ -364,10 +476,10 @@ public abstract class SSLEngineHandler {
     /**
      * Creates the trust managers using a JKS keystore as an input.
      *
-     * @param filepath         - the path to the JKS keystore.
+     * @param filepath - the path to the JKS keystore.
      * @param keystorePassword - the keystore's password.
      * @return {@link TrustManager} array.
-     * @throws Exception if an error occurs.
+     * @throws Exception
      */
     protected TrustManager[] createTrustManagers(String filepath, String keystorePassword) throws Exception {
 
@@ -384,6 +496,7 @@ public abstract class SSLEngineHandler {
 
         return tmf.getTrustManagers();
     }
+
 
 
 }
