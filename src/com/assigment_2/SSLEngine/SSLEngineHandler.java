@@ -15,7 +15,7 @@ public abstract class SSLEngineHandler {
     /**
      * ByteBuffer that contains this peer's data (decrypted) to be sent to the other peer'
      * Before sending to the other peer' it should be encrypted by using {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
-     * <p>
+     *
      * Should be (at least) the size of the outgoing data
      */
     private ByteBuffer myAppData;
@@ -24,7 +24,7 @@ public abstract class SSLEngineHandler {
     /**
      * ByteBuffer that contains this peer's data (encrypted) to be sent to the other peer'
      * Generated after encrypting {@link SSLEngineHandler#myNetData} with {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
-     * <p>
+     *
      * It should be initialized using {@link SSLSession#getPacketBufferSize()}
      */
     private ByteBuffer myNetData;
@@ -33,11 +33,11 @@ public abstract class SSLEngineHandler {
     /**
      * ByteBuffer that contains the other peer's data (decrypted) received from the other peer
      * Obtain after {@link SSLEngineHandler#peerAppData} is decrypted by using {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)}
-     * <p>
+     *
      * It Must be large enough to hold the application data from any peer.
      * It should be initialized using {@link SSLSession#getPacketBufferSize()}
      * If necessary, its size should be enlarge.
-     * <p>
+     *
      * Check {@link SSLEngineHandler#enlargeBuffer(ByteBuffer, int)}
      */
     private ByteBuffer peerAppData;
@@ -46,10 +46,10 @@ public abstract class SSLEngineHandler {
     /**
      * ByteBuffer that contains the other peer's data (encrypted) received from the other peer'
      * It should be initialized with size of 16KB
-     * <p>
+     *
      * If the {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)} detects large packets,
      * the buffer sizes returned by SSLSession will be used to updated the size dynamically.
-     * <p>
+     *
      * Check {@link SSLEngineHandler#enlargeBuffer(ByteBuffer, int)}}
      */
     private ByteBuffer peerNetData;
@@ -179,6 +179,7 @@ public abstract class SSLEngineHandler {
         SSLEngineResult res = engine.unwrap(peerNetData, peerAppData);
         peerNetData.compact();
 
+
         switch (res.getStatus()) {
             case OK:
                 break;
@@ -223,7 +224,7 @@ public abstract class SSLEngineHandler {
      * @return SSLEngineResult.HandshakeStatus returns the status of the handshake or null in case of error
      * @throws Exception if an error occurs.
      */
-    protected SSLEngineResult.HandshakeStatus writeIntern(SocketChannel socketChannel, SSLEngine engine) throws Exception {
+    private SSLEngineResult.HandshakeStatus writeIntern(SocketChannel socketChannel, SSLEngine engine) throws Exception {
 
         // Generate TLS encoded data (handshake or application data)
         myNetData.clear();
@@ -263,7 +264,7 @@ public abstract class SSLEngineHandler {
      * @param sessionProposedCapacity - recommended size by the engine's session
      * @return The same buffer if there is no space problem or a new buffer with the same data but more space.
      */
-    protected ByteBuffer enlargeBuffer(ByteBuffer buffer, int sessionProposedCapacity) {
+    private ByteBuffer enlargeBuffer(ByteBuffer buffer, int sessionProposedCapacity) {
         if (sessionProposedCapacity > buffer.capacity()) {
             buffer = ByteBuffer.allocate(sessionProposedCapacity);
         } else {
@@ -279,7 +280,7 @@ public abstract class SSLEngineHandler {
      * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
      * @return The same buffer if there is no space problem or a new buffer with the same data but more space.
      */
-    protected ByteBuffer handleBufferUnderflow(ByteBuffer buffer, SSLEngine engine) {
+    private ByteBuffer handleBufferUnderflow(ByteBuffer buffer, SSLEngine engine) {
         if (engine.getSession().getPacketBufferSize() < buffer.limit()) {
             return buffer;
         } else {
@@ -297,11 +298,11 @@ public abstract class SSLEngineHandler {
      * @param engine - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
      * @return The same buffer if there is no space problem or a new buffer with the same data but more space.
      */
-    protected ByteBuffer enlargePacketBuffer(ByteBuffer buffer, SSLEngine engine) {
+    private ByteBuffer enlargePacketBuffer(ByteBuffer buffer, SSLEngine engine) {
         return enlargeBuffer(buffer, engine.getSession().getPacketBufferSize());
     }
 
-    protected ByteBuffer enlargeApplicationBuffer(ByteBuffer buffer, SSLEngine engine) {
+    private ByteBuffer enlargeApplicationBuffer(ByteBuffer buffer, SSLEngine engine) {
         return enlargeBuffer(buffer, engine.getSession().getApplicationBufferSize());
     }
 
@@ -322,6 +323,8 @@ public abstract class SSLEngineHandler {
 
             // Generate handshaking data
             SSLEngineResult res = engine.wrap(myAppData, myNetData);
+
+            System.out.println(res.getStatus());
 
             //flipping from reading to writing
             myNetData.flip();
