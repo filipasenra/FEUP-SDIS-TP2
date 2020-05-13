@@ -324,7 +324,7 @@ public abstract class SSLEngineHandler {
             // Generate handshaking data
             SSLEngineResult res = engine.wrap(myAppData, myNetData);
 
-            System.out.println(res.getStatus());
+            //System.out.println(res.getStatus());
 
             //flipping from reading to writing
             myNetData.flip();
