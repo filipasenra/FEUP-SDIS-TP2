@@ -5,6 +5,8 @@ import com.assigment_2.SSLEngine.SSLEngineClient;
 import java.io.IOException;
 import java.rmi.RemoteException;
 
+import static java.lang.Thread.sleep;
+
 public class TestAppHandler extends SSLEngineClient {
 
     // TODO: adjust functions to send message to peer
@@ -36,6 +38,7 @@ public class TestAppHandler extends SSLEngineClient {
             this.connect();
 
             this.write("OLA");
+            //this.write("OLA");
 
             this.shutdown();
 
