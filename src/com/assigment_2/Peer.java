@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-public class Peer extends SSLEngineServer {
+public class Peer extends SSLEngineServer implements InterfacePeer{
     private final String id;
     private final Double version;
 
@@ -19,12 +19,14 @@ public class Peer extends SSLEngineServer {
     /**
      * Server is designed to apply an SSL/TLS protocol and listen to an IP address and port.
      *
+     * @param version    -  version of the protocol
+     * @param id - unique identification of peer.
      * @param protocol    - the SSL/TLS protocol that this server will be configured to apply.
      * @param hostAddress - the IP address this server will listen to.
      * @param port        - the port this server will listen to.
      * @throws Exception
      */
-    public Peer(String protocol, String hostAddress, int port, Double version, String id) throws Exception {
+    public Peer( Double version, String id, String protocol, String hostAddress, int port) throws Exception {
         super(protocol, hostAddress, port);
         this.id = id;
         this.version = version;

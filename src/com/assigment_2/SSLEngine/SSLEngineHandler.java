@@ -336,7 +336,7 @@ public abstract class SSLEngineHandler {
             myNetData.compact();
         }
 
-        // Close transport
+
         socketChannel.close();
 
     }

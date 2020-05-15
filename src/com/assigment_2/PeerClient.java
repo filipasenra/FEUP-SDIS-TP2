@@ -5,6 +5,10 @@ import com.assigment_2.SSLEngine.ServerRunnable;
 import com.assigment_2.Storage.Storage;
 
 import java.io.*;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
@@ -52,10 +56,22 @@ public class PeerClient {
 
         node = new Node(address, port, M);
 
-        serverRunnable = new ServerRunnable(new Peer("TLSv1.2", address, port, version, id));
+        Peer obj = new Peer(version, id, "TLSv1.2", address, port);
+
+        serverRunnable = new ServerRunnable(obj);
 
         exec.execute(serverRunnable);
-        //TODO: adjust read function in peer to behave as we'd like
+
+        try {
+            InterfacePeer peer = (InterfacePeer) UnicastRemoteObject.exportObject(obj, 0);
+            Registry rmiReg  = LocateRegistry.getRegistry();
+            rmiReg.rebind(id, peer);
+
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
 
         getStorageFromFile();
 
