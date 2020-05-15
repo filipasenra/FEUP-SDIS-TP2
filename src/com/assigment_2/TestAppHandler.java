@@ -1,14 +1,10 @@
 package com.assigment_2;
 
-import com.assigment_2.SSLEngine.SSLEngineClient;
-
 import java.io.IOException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-
-import static java.lang.Thread.sleep;
 
 public class TestAppHandler {
 

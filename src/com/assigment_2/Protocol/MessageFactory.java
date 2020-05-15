@@ -1,5 +1,6 @@
 package com.assigment_2.Protocol;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 
 public final class MessageFactory {

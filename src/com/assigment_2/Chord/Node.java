@@ -1,69 +1,59 @@
 package com.assigment_2.Chord;
-
 import java.math.BigInteger;
-import java.security.MessageDigest;
 
-public class Node {
+public class Node extends SimpleNode {
 
-    BigInteger id;
-    String address;
-    int port;
-
-    Node predecessor;
-    Node successor;
+    SimpleNode predecessor;
+    SimpleNode successor;
     private Finger[] fingerTable;
 
     public Node(String address, int port, int m) {
-        this.address = address;
-        this.port = port;
-
-        //TODO: probably improve this id
-        this.id = createId(address, port);
+        super(address, port);
 
         this.fingerTable = new Finger[m];
 
     }
 
-    private BigInteger createId(String address, int port) {
 
-        String input = address + "-" + port;
+    //ask node to find id's successor
+    public SimpleNode find_successor(BigInteger id){
 
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
-            byte[] encoded = digest.digest(input.getBytes());
-            return new BigInteger(1,encoded);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new BigInteger(1,"0".getBytes());
-        }
+        if(id.equals(this.id))
+            return this;
+
+        if(isBetween(id, this.id, this.successor.id))
+            return this.successor;
+
+
+        SimpleNode n_ = this.closest_preceding_finger(id);
+
+        if(id.equals(n_.id))
+            return n_;
+
+        return n_.find_successor(id);
+
     }
 
     //ask node to find id's successor
-    public Node find_successor(BigInteger id){
+    public SimpleNode find_predecessor(BigInteger id){
 
-        Node n_ = find_predecessor(id);
+        if(id.equals(this.id))
+            return this.predecessor;
 
-        return n_.successor;
+        if(isBetween(id, this.predecessor.id, this.id))
+            return this.predecessor;
 
-    }
+        SimpleNode n_ = this.closest_preceding_finger(id);
 
-    //ask node n to find id's predecessor
-    private Node find_predecessor(BigInteger id) {
+        if(id.equals(n_.id))
+            return n_;
 
-        Node n_ = this;
-
-        while(!(isBetween(id, n_.id, n_.successor.id))){
-
-            n_ = n_.closest_preceding_finger(id);
-
-        }
-
-        return n_;
+        return n_.find_predecessor(id);
 
     }
 
     //return closes finger preceding id
-    private Node closest_preceding_finger(BigInteger id) {
+    private SimpleNode closest_preceding_finger(BigInteger id) {
 
         for(int i = this.fingerTable.length -1; i >= 0; i--){
 
@@ -99,8 +89,10 @@ public class Node {
     private void init_finger_table(Node n_) {
 
         this.fingerTable[1].node = n_.find_successor(this.fingerTable[1].start);
-        predecessor = successor.predecessor;
-        successor.predecessor = this;
+        this.predecessor = this.find_predecessor(this.successor.id);
+
+        //TODO: send message for successor to make this node its predecessor
+        //successor.predecessor = this;
 
         for(int i = 0; i < this.fingerTable.length-1; i++){
             if(isBetween(this.fingerTable[i+1].start, this.id, this.fingerTable[i].node.id))
@@ -118,20 +110,24 @@ public class Node {
         for(int i = 0; i < this.fingerTable.length; i++){
 
             //find last node p whose i_th finger might be n
-            Node p = find_predecessor(this.id.subtract(new BigInteger("2").pow(i - 1)));
+            SimpleNode p = find_predecessor(this.id.subtract(new BigInteger("2").pow(i - 1)));
+
             p.update_finger_table(this, i);
         }
 
     }
 
     //if s is i_th finger of n, update n's finger table with s
-    private void update_finger_table(Node s, int i) {
+    public boolean update_finger_table(SimpleNode s, int i) {
 
         if( isBetween(s.id, this.id, this.fingerTable[i].node.id)){
             this.fingerTable[i].node = s;
-            Node p = predecessor; //get first node preceding n
-            p.update_finger_table(s, i);
+            SimpleNode p = this.predecessor; //get first node preceding n
+
+            return p.update_finger_table(s, i);
         }
+
+        return false;
 
     }
 

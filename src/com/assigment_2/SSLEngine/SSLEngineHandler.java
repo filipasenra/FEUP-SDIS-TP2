@@ -214,6 +214,16 @@ public abstract class SSLEngineHandler {
             System.out.println("SENT: " + message);
     }
 
+    protected void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws Exception {
+
+        myAppData.clear();
+        myAppData.put(message);
+        myAppData.flip();
+
+        if (writeIntern(socketChannel, engine) != null)
+            System.out.println("SENT: " + message);
+    }
+
     /**
      * Will send a message to a peer
      *
@@ -392,4 +402,7 @@ public abstract class SSLEngineHandler {
     }
 
 
+    public ByteBuffer getPeerAppData() {
+        return peerAppData;
+    }
 }

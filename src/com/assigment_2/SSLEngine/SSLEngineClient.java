@@ -111,6 +111,16 @@ public class SSLEngineClient extends SSLEngineHandler {
     }
 
     /**
+     * Send a message to the server
+     *
+     * @param message - message to sent to the server
+     * @throws Exception if an error occurs.
+     */
+    public void write(byte[] message) throws Exception {
+        write(socketChannel, engine, message);
+    }
+
+    /**
      * Receive a message from the server
      *
      * @throws Exception if an error occurs.
