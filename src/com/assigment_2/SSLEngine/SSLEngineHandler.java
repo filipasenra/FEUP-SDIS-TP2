@@ -317,14 +317,51 @@ public abstract class SSLEngineHandler {
     }
 
     /**
-     * Closes a connection
+     * Closes a connection: sends a close message
+     * Used when we received a close message
      *
      * @param socketChannel - SocketChannel to communicate between this peer and the other peer
      * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
      * @throws IOException if an error occurs.
      */
     protected void closeConnection(SocketChannel socketChannel, SSLEngine engine) throws IOException {
+
+        //SEND CLOSE MESSAGE
+        sendCloseMessage(socketChannel, engine);
+
+        socketChannel.close();
+
+    }
+
+    /**
+     * Shutdowns a connection: sends a close message and receives a close message from the other peer
+     * Used when we want to shutdown/terminate the communication between two peers
+     *
+     * @param socketChannel - SocketChannel to communicate between this peer and the other peer
+     * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     * @throws IOException if an error occurs.
+     */
+    protected void shutdown(SocketChannel socketChannel, SSLEngine engine) throws IOException {
         // Indicate that application is done with engine
+        engine.closeOutbound();
+
+        sendCloseMessage(socketChannel, engine);
+        receiveCloseMessage(socketChannel, engine);
+
+        socketChannel.close();
+
+    }
+
+    /**
+     * Sends a close message to the other peer
+     *
+     * @param socketChannel - SocketChannel to communicate between this peer and the other peer
+     * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     * @throws IOException if an error occurs.
+     */
+    private void sendCloseMessage(SocketChannel socketChannel, SSLEngine engine) throws IOException {
+
+        // Indicates that application is done with engine
         engine.closeOutbound();
 
         while (!engine.isOutboundDone()) {
@@ -346,8 +383,29 @@ public abstract class SSLEngineHandler {
             myNetData.compact();
         }
 
+    }
 
-        socketChannel.close();
+    /**
+     * Receives a close message from the peer
+     *
+     * @param socketChannel - SocketChannel to communicate between this peer and the other peer
+     * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
+     * @throws IOException if an error occurs.
+     */
+    private void receiveCloseMessage(SocketChannel socketChannel, SSLEngine engine) throws IOException {
+
+        while (true) {
+            int num = socketChannel.read(peerNetData);
+            if (num >= 0) {
+                // Process incoming data
+                peerNetData.flip();
+                peerAppData.clear();
+                SSLEngineResult res = engine.unwrap(peerNetData, peerAppData);
+
+                if(res.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.FINISHED || res.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING)
+                    break;
+            }
+        }
 
     }
 
