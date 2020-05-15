@@ -37,7 +37,7 @@ public class SimpleNode {
     //ask node to find id's successor
     public SimpleNode find_successor(BigInteger id){
 
-        byte[] message = MessageFactoryChord.createMessage(3, "FINDSUCESSOR", id);
+        byte[] message = MessageFactoryChord.createMessage(3, "FIND_SUCCESSOR", id);
 
         try {
             SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
@@ -54,7 +54,7 @@ public class SimpleNode {
 
             } else {
 
-                System.err.println("ERROR: Didn't received a SUCCESSOR answer to FINDSUCESSOR");
+                System.err.println("ERROR: Didn't received a SUCCESSOR answer to FIND_SUCCESSOR");
                 return null;
 
             }
@@ -71,7 +71,7 @@ public class SimpleNode {
     protected SimpleNode find_predecessor(BigInteger id) {
 
 
-        byte[] message = MessageFactoryChord.createMessage(3, "FINDPREDECESSOR", id);
+        byte[] message = MessageFactoryChord.createMessage(3, "FIND_PREDECESSOR", id);
 
         try {
             SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
@@ -88,7 +88,7 @@ public class SimpleNode {
 
             } else {
 
-                System.err.println("ERROR: Didn't received a PREDECESSOR answer to FINDPREDECESSOR");
+                System.err.println("ERROR: Didn't received a PREDECESSOR answer to FIND_PREDECESSOR");
                 return null;
 
             }
@@ -104,7 +104,7 @@ public class SimpleNode {
     protected boolean update_finger_table(SimpleNode s, int i) {
 
 
-        byte[] message = MessageFactoryChord.createMessage(3, "UPDATEFINGERTABLE", s.id, s.address, s.port, i);
+        byte[] message = MessageFactoryChord.createMessage(3, "UPDATE_FINGERTABLE", s.id, s.address, s.port, i);
 
         try {
             SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
@@ -115,14 +115,42 @@ public class SimpleNode {
             MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
             messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-            if(messageFactoryChord.messageType.equals("FINGERTABLEUPDATED")){
+            if(messageFactoryChord.messageType.equals("FINGERTABLE_UPDATED")){
 
                 return true;
             } else {
 
-                System.err.println("ERROR: Didn't received a FINGERTABLEUPDATED answer to UPDATEFINGERTABLE");
+                System.err.println("ERROR: Didn't received a FINGERTABLE_UPDATED answer to UPDATE_FINGERTABLE");
                 return false;
 
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+
+    }
+
+    public boolean set_predecessor(SimpleNode s){
+
+        byte[] message = MessageFactoryChord.createMessage(3, "UPDATE_PREDECESSOR", s.id, s.address, s.port);
+
+        try {
+            SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
+            client.connect();
+            client.write(message);
+            client.read();
+
+            MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
+            messageFactoryChord.parseMessage(client.getPeerAppData().array());
+
+            if(messageFactoryChord.messageType.equals("PREDECESSOR_UPDATED")){
+                return true;
+            } else {
+                System.err.println("ERROR: Didn't received a PREDECESSOR_UPDATED answer to UPDATE_PREDECESSOR");
+                return false;
             }
 
         } catch (Exception e) {

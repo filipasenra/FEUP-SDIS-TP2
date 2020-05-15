@@ -66,7 +66,7 @@ public class Node extends SimpleNode {
 
     // node n joins the network
     // n_ is an arbitrary node in the network
-    public void join(Node n_){
+    public void join(SimpleNode n_){
 
         if(n_ != null){
 
@@ -77,7 +77,8 @@ public class Node extends SimpleNode {
         } else{
             //n is the only node in the network
             for(int i = 0; i < this.fingerTable.length; i++){
-                this.fingerTable[i].node = this;
+
+                this.fingerTable[i] = new Finger(this);
             }
             this.predecessor = this;
         }
@@ -86,19 +87,25 @@ public class Node extends SimpleNode {
 
     //initialize finger table of local node
     //n_ is an arbitrary node already in the network
-    private void init_finger_table(Node n_) {
+    private void init_finger_table(SimpleNode n_) {
 
-        this.fingerTable[1].node = n_.find_successor(this.fingerTable[1].start);
+        SimpleNode successor = n_.find_successor(this.id);
+
+        if(successor == null){
+            throw new IllegalStateException("Not able to init finger table!");
+        }
+
+        this.fingerTable[1] = new Finger(successor);
         this.predecessor = this.find_predecessor(this.successor.id);
 
         //TODO: send message for successor to make this node its predecessor
-        //successor.predecessor = this;
+        this.successor.set_predecessor(this);
 
         for(int i = 0; i < this.fingerTable.length-1; i++){
             if(isBetween(this.fingerTable[i+1].start, this.id, this.fingerTable[i].node.id))
-                this.fingerTable[i + 1].node = this.fingerTable[i].node;
+                this.fingerTable[i + 1] = new Finger(this.fingerTable[i].node);
             else {
-                this.fingerTable[i + 1].node = n_.find_successor(this.fingerTable[i+1].start);
+                this.fingerTable[i + 1] = new Finger(n_.find_successor(this.fingerTable[i+1].start));
             }
 
         }

@@ -1,6 +1,7 @@
 package com.assigment_2;
 
 import com.assigment_2.Chord.Node;
+import com.assigment_2.Chord.SimpleNode;
 import com.assigment_2.SSLEngine.ServerRunnable;
 import com.assigment_2.Storage.Storage;
 
@@ -54,7 +55,14 @@ public class PeerClient {
         address = args[2];
         port = Integer.parseInt(args[3]);
 
+        SimpleNode simpleNode = null;
+
+        if(args.length == 6){
+            simpleNode = new SimpleNode(args[4], Integer.parseInt(args[5]));
+        }
+
         node = new Node(address, port, M);
+        node.join(simpleNode);
 
         Peer obj = new Peer(version, id, "TLSv1.2", address, port);
 

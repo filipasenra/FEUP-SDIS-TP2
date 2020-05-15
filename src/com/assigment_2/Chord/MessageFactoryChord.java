@@ -23,8 +23,12 @@ public final class MessageFactoryChord {
 
     public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port, int i) {
 
-
         return (version + " " + messageType + " " + requestId + " " + address + " " + port + " " + i + CRLF + CRLF).getBytes();
+    }
+
+    public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port) {
+
+        return (version + " " + messageType + " " + requestId + " " + address + " " + port + CRLF + CRLF).getBytes();
     }
 
     public boolean parseMessage(byte[] message) {
