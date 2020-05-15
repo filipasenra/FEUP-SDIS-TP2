@@ -18,7 +18,6 @@ public final class MessageFactoryChord {
     public static byte[] createMessage(double version, String messageType, BigInteger requestId){
 
         return (version + " " + messageType + " " + requestId + CRLF + CRLF).getBytes();
-
     }
 
     public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port, int i) {

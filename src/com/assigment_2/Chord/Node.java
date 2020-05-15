@@ -5,7 +5,7 @@ public class Node extends SimpleNode {
 
     SimpleNode predecessor;
     SimpleNode successor;
-    private Finger[] fingerTable;
+    private final Finger[] fingerTable;
 
     public Node(String address, int port, int m) {
         super(address, port);
@@ -97,8 +97,6 @@ public class Node extends SimpleNode {
 
         this.fingerTable[1] = new Finger(successor);
         this.predecessor = this.find_predecessor(this.successor.id);
-
-        //TODO: send message for successor to make this node its predecessor
         this.successor.set_predecessor(this);
 
         for(int i = 0; i < this.fingerTable.length-1; i++){
