@@ -19,6 +19,9 @@ public class SimpleNode {
         this.id = createId(address, port);
     }
 
+    public BigInteger getId() {
+        return id;
+    }
 
     private BigInteger createId(String address, int port) {
 

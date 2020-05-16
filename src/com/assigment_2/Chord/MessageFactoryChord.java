@@ -15,6 +15,10 @@ public final class MessageFactoryChord {
 
     public MessageFactoryChord(){}
 
+    public BigInteger getRequestId() {
+        return requestId;
+    }
+
     public static byte[] createMessage(double version, String messageType, BigInteger requestId){
 
         return (version + " " + messageType + " " + requestId + CRLF + CRLF).getBytes();
@@ -65,6 +69,7 @@ public final class MessageFactoryChord {
                     break;
                 case 3:
                     this.address = headerArray[j];
+                    break;
                 case 4:
                     this.port = Integer.parseInt(headerArray[j]);
                     break;

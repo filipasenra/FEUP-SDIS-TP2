@@ -1,5 +1,7 @@
 package com.assigment_2.SSLEngine;
 
+import com.assigment_2.Chord.Node;
+
 /**
  * A {@link Runnable} with a {@link SSLEngineServer} object.
  *
@@ -19,9 +21,7 @@ public class ServerRunnable implements Runnable {
      * Initiates the server to be run
      * */
     public ServerRunnable(SSLEngineServer server) {
-
         this.server = server;
-
     }
 
     /**

@@ -1,5 +1,12 @@
 package com.assigment_2.SSLEngine;
 
+import com.assigment_2.Chord.MessageFactoryChord;
+import com.assigment_2.Chord.Node;
+import com.assigment_2.Chord.SimpleNode;
+import com.assigment_2.Peer;
+import com.assigment_2.PeerClient;
+
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -8,6 +15,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -116,6 +124,19 @@ public class SSLEngineServer extends SSLEngineHandler {
                 } else if (key.isReadable()) {
                     // a channel is ready for reading
                     read((SocketChannel) key.channel(), (SSLEngine) key.attachment());
+
+                    byte[] received = getPeerAppData().array();
+                    MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
+                    messageFactoryChord.parseMessage(received);
+                    BigInteger request_id = messageFactoryChord.getRequestId();
+
+                    SimpleNode node = PeerClient.getNode().find_successor(request_id);
+
+                    System.out.println(node.getId());
+
+
+
+
 
                 } else if (key.isWritable()) {
                     // a channel is ready for writing

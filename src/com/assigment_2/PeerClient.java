@@ -91,6 +91,10 @@ public class PeerClient {
         return true;
     }
 
+    public static Node getNode() {
+        return node;
+    }
+
     public static String getId() {
         return id;
     }
