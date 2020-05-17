@@ -1,12 +1,13 @@
 package com.assigment_2.Chord;
 
 import com.assigment_2.PeerClient;
+import com.assigment_2.SSLEngine.MessagesHandler;
 
 import javax.net.ssl.SSLEngine;
 import java.math.BigInteger;
 import java.nio.channels.SocketChannel;
 
-public class ReceivedChordMessagesHandler implements ChordMessagesHandler{
+public class ReceivedChordMessagesHandler implements MessagesHandler {
     MessageFactoryChord messageFactoryChord;
     SocketChannel socketChannel;
     SSLEngine engine;

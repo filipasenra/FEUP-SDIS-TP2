@@ -1,10 +1,5 @@
 package com.assigment_2.SSLEngine;
 
-import com.assigment_2.Chord.*;
-import com.assigment_2.Peer;
-import com.assigment_2.PeerClient;
-
-import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -13,13 +8,11 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
 import javax.net.ssl.SSLSession;
 
 /**
@@ -37,7 +30,7 @@ import javax.net.ssl.SSLSession;
  */
 public class SSLEngineServer extends SSLEngineHandler {
 
-    private final ChordMessagesHandler receivedChordMessagesHandler;
+    private final MessagesHandler messagesHandler;
     /**
      * States if the server is active
      * It is false after {@link SSLEngineServer#stop()}
@@ -64,9 +57,9 @@ public class SSLEngineServer extends SSLEngineHandler {
      * @param port     The peer's port that will be used.
      * @throws Exception if an error occurs.
      */
-    public SSLEngineServer(String protocol, String address, int port, ChordMessagesHandler chordMessagesHandler) throws Exception {
+    public SSLEngineServer(String protocol, String address, int port, MessagesHandler messagesHandler) throws Exception {
 
-        receivedChordMessagesHandler = chordMessagesHandler;
+        this.messagesHandler = messagesHandler;
 
         context = SSLContext.getInstance(protocol);
         context.init(createKeyManagers("../com/assigment_2/Resources/server.jks", "storepass", "keypass"), createTrustManagers("../com/assigment_2/Resources/trustedCerts.jks", "storepass"), new SecureRandom());
@@ -122,7 +115,7 @@ public class SSLEngineServer extends SSLEngineHandler {
                 } else if (key.isReadable()) {
                     // a channel is ready for reading
                     read((SocketChannel) key.channel(), (SSLEngine) key.attachment());
-                    this.receivedChordMessagesHandler.run((SocketChannel) key.channel(), (SSLEngine) key.attachment(), getPeerAppData().array());
+                    this.messagesHandler.run((SocketChannel) key.channel(), (SSLEngine) key.attachment(), getPeerAppData().array());
 
                 } else if (key.isWritable()) {
                     // a channel is ready for writing
