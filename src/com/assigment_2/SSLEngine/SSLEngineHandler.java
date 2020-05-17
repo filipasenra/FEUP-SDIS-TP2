@@ -221,7 +221,7 @@ public abstract class SSLEngineHandler {
         myAppData.flip();
 
         if (writeIntern(socketChannel, engine) != null)
-            System.out.println("SENT: " + message);
+            System.out.println("SENT: " + new String(message));
     }
 
     /**

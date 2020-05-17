@@ -31,6 +31,7 @@ public class PeerClient {
     private static Storage storage = new Storage();
 
     private static final ScheduledThreadPoolExecutor exec = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(250);
+    private static Peer obj;
 
     public static void main(String[] args) throws Exception {
         if(!parseArgs(args))
@@ -64,7 +65,7 @@ public class PeerClient {
         node = new Node(address, port, M);
         node.join(simpleNode);
 
-        Peer obj = new Peer(version, id, "TLSv1.2", address, port);
+        obj = new Peer(version, id, "TLSv1.2", address, port);
 
         serverRunnable = new ServerRunnable(obj);
 
@@ -157,5 +158,9 @@ public class PeerClient {
 
     public static Double getVersion() {
         return version;
+    }
+
+    public static Peer getObj() {
+        return obj;
     }
 }

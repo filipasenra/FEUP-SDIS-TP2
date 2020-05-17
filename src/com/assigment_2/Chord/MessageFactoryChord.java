@@ -10,17 +10,13 @@ public final class MessageFactoryChord {
     BigInteger requestId;
     String address;
     int port;
-    int i;
+    int i_finger_table;
     byte[] data;
 
     public MessageFactoryChord(){}
 
     public BigInteger getRequestId() {
         return requestId;
-    }
-
-    public String getMessageType() {
-        return messageType;
     }
 
     public static byte[] createMessage(double version, String messageType, BigInteger requestId){
@@ -36,6 +32,11 @@ public final class MessageFactoryChord {
     public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port) {
 
         return (version + " " + messageType + " " + requestId + " " + address + " " + port + CRLF + CRLF).getBytes();
+    }
+
+    public static byte[] createMessage(double version, String messageType){
+
+        return (version + " " + messageType + CRLF + CRLF).getBytes();
     }
 
     public boolean parseMessage(byte[] message) {
@@ -78,7 +79,7 @@ public final class MessageFactoryChord {
                     this.port = Integer.parseInt(headerArray[j]);
                     break;
                 case 5:
-                    this.i = Integer.parseInt(headerArray[j]);
+                    this.i_finger_table = Integer.parseInt(headerArray[j]);
                     break;
                 default:
                     return false;
@@ -90,3 +91,4 @@ public final class MessageFactoryChord {
         return true;
     }
 }
+

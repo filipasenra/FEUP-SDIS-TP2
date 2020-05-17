@@ -1,8 +1,6 @@
 package com.assigment_2.SSLEngine;
 
-import com.assigment_2.Chord.MessageFactoryChord;
-import com.assigment_2.Chord.Node;
-import com.assigment_2.Chord.SimpleNode;
+import com.assigment_2.Chord.*;
 import com.assigment_2.Peer;
 import com.assigment_2.PeerClient;
 
@@ -39,6 +37,7 @@ import javax.net.ssl.SSLSession;
  */
 public class SSLEngineServer extends SSLEngineHandler {
 
+    private final ChordMessagesHandler receivedChordMessagesHandler;
     /**
      * States if the server is active
      * It is false after {@link SSLEngineServer#stop()}
@@ -65,7 +64,9 @@ public class SSLEngineServer extends SSLEngineHandler {
      * @param port     The peer's port that will be used.
      * @throws Exception if an error occurs.
      */
-    public SSLEngineServer(String protocol, String address, int port) throws Exception {
+    public SSLEngineServer(String protocol, String address, int port, ChordMessagesHandler chordMessagesHandler) throws Exception {
+
+        receivedChordMessagesHandler = chordMessagesHandler;
 
         context = SSLContext.getInstance(protocol);
         context.init(createKeyManagers("../com/assigment_2/Resources/server.jks", "storepass", "keypass"), createTrustManagers("../com/assigment_2/Resources/trustedCerts.jks", "storepass"), new SecureRandom());
@@ -121,19 +122,7 @@ public class SSLEngineServer extends SSLEngineHandler {
                 } else if (key.isReadable()) {
                     // a channel is ready for reading
                     read((SocketChannel) key.channel(), (SSLEngine) key.attachment());
-
-
-                    byte[] received = getPeerAppData().array();
-                    MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
-                    messageFactoryChord.parseMessage(received);
-
-                    if (messageFactoryChord.getMessageType().equals("FIND_SUCCESSOR")) {
-                        BigInteger request_id = messageFactoryChord.getRequestId();
-
-                        SimpleNode node = PeerClient.getNode().find_successor(request_id);
-                        System.out.println(node.getId());
-                    }
-
+                    this.receivedChordMessagesHandler.run((SocketChannel) key.channel(), (SSLEngine) key.attachment(), getPeerAppData().array());
 
                 } else if (key.isWritable()) {
                     // a channel is ready for writing
@@ -184,6 +173,10 @@ public class SSLEngineServer extends SSLEngineHandler {
             socketChannel.close();
             System.out.println("Failed to connect to client!");
         }
+    }
+
+    public void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws Exception {
+        super.write(socketChannel, engine, message);
     }
 
     /**

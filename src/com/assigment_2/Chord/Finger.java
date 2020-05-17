@@ -6,8 +6,7 @@ public class Finger {
     BigInteger start;
     SimpleNode node;
 
-    public Finger(SimpleNode node) {
+    public Finger(SimpleNode node, BigInteger start) {
         this.node = node;
-        this.start = node.id;
     }
 }

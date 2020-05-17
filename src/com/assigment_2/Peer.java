@@ -1,5 +1,6 @@
 package com.assigment_2;
 
+import com.assigment_2.Chord.ReceivedChordMessagesHandler;
 import com.assigment_2.Chunk.BackUpChunk;
 import com.assigment_2.Chunk.Chunk;
 import com.assigment_2.SSLEngine.SSLEngineServer;
@@ -27,7 +28,7 @@ public class Peer extends SSLEngineServer implements InterfacePeer{
      * @throws Exception
      */
     public Peer( Double version, String id, String protocol, String hostAddress, int port) throws Exception {
-        super(protocol, hostAddress, port);
+        super(protocol, hostAddress, port, new ReceivedChordMessagesHandler());
         this.id = id;
         this.version = version;
     }
