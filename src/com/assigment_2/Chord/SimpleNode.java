@@ -102,11 +102,7 @@ public class SimpleNode {
         MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
         messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-        if (messageFactoryChord.messageType.equals("FINGERTABLE_UPDATED")) {
-
-            return;
-
-        } else {
+        if (!messageFactoryChord.messageType.equals("FINGERTABLE_UPDATED")) {
 
             throw new IllegalStateException("ERROR: Didn't received a PREDECESSOR answer to FIND_PREDECESSOR");
 
@@ -114,7 +110,7 @@ public class SimpleNode {
 
     }
 
-    public boolean set_predecessor(SimpleNode s) throws Exception {
+    public void set_predecessor(SimpleNode s) throws Exception {
 
         byte[] message = MessageFactoryChord.createMessage(3, "UPDATE_PREDECESSOR", s.id, s.address, s.port);
 
@@ -127,11 +123,7 @@ public class SimpleNode {
         MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
         messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-        if (messageFactoryChord.messageType.equals("PREDECESSOR_UPDATED")) {
-
-            return true;
-
-        } else {
+        if (!messageFactoryChord.messageType.equals("PREDECESSOR_UPDATED")) {
 
             throw new IllegalStateException("ERROR: Didn't received a PREDECESSOR_UPDATED answer to UPDATE_PREDECESSOR");
 
