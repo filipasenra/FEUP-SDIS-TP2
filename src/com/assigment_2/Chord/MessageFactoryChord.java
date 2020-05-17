@@ -19,6 +19,10 @@ public final class MessageFactoryChord {
         return requestId;
     }
 
+    public String getMessageType() {
+        return messageType;
+    }
+
     public static byte[] createMessage(double version, String messageType, BigInteger requestId){
 
         return (version + " " + messageType + " " + requestId + CRLF + CRLF).getBytes();

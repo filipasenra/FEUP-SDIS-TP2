@@ -26,17 +26,16 @@ import javax.net.ssl.SSLSession;
 
 /**
  * An SSL server for TLS Protocols.
- *
+ * <p>
  * This server will listen to a specific address and port and serve TLS connections.
- *
+ * <p>
  * After initialization, {@link SSLEngineServer#start()} should be called.
  * This will allow the server to start listening to new connection requests.
- *
+ * <p>
  * A {@link Runnable} with a {@link SSLEngineServer} object should be created.
  * The runnable (for example {@link ServerRunnable}) should start the server by calling
  * {@link SSLEngineServer#start()} in its run method.
  * It should also provide a stop method which will stop de server by calling {@link SSLEngineServer#stop()}
- *
  */
 public class SSLEngineServer extends SSLEngineHandler {
 
@@ -49,23 +48,21 @@ public class SSLEngineServer extends SSLEngineHandler {
     /**
      * The context will be initialized with a specific TLS protocol.
      * Will be used to create and {@link SSLEngine} for each new connection.
-     *
      */
     private final SSLContext context;
 
     /**
-     *  Examines one or more Channel instances, and determines which channels are ready for reading or writing.
+     * Examines one or more Channel instances, and determines which channels are ready for reading or writing.
      */
     private final Selector selector;
 
 
     /**
-     *
      * Applies a TLS protocol prepares to listen to an address and port.
      *
      * @param protocol The TLS protocol to be used. For Java 1.6 use up to TLSv1 protocol. For Java 1.7 or later can also use TLSv1.1 and TLSv1.2 protocols.
-     * @param address The address of the peer.
-     * @param port The peer's port that will be used.
+     * @param address  The address of the peer.
+     * @param port     The peer's port that will be used.
      * @throws Exception if an error occurs.
      */
     public SSLEngineServer(String protocol, String address, int port) throws Exception {
@@ -114,7 +111,7 @@ public class SSLEngineServer extends SSLEngineHandler {
             while (keyIterator.hasNext()) {
                 SelectionKey key = keyIterator.next();
 
-                if(key.isAcceptable()) {
+                if (key.isAcceptable()) {
                     // a connection was accepted by a ServerSocketChannel.
                     accept(key);
 
@@ -125,17 +122,17 @@ public class SSLEngineServer extends SSLEngineHandler {
                     // a channel is ready for reading
                     read((SocketChannel) key.channel(), (SSLEngine) key.attachment());
 
+
                     byte[] received = getPeerAppData().array();
                     MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
                     messageFactoryChord.parseMessage(received);
-                    BigInteger request_id = messageFactoryChord.getRequestId();
 
-                    SimpleNode node = PeerClient.getNode().find_successor(request_id);
+                    if (messageFactoryChord.getMessageType().equals("FIND_SUCCESSOR")) {
+                        BigInteger request_id = messageFactoryChord.getRequestId();
 
-                    System.out.println(node.getId());
-
-
-
+                        SimpleNode node = PeerClient.getNode().find_successor(request_id);
+                        System.out.println(node.getId());
+                    }
 
 
                 } else if (key.isWritable()) {
