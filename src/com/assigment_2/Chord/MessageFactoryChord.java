@@ -4,19 +4,32 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 public final class MessageFactoryChord {
-    static String CRLF = "\r\n";
-    double version;
-    String messageType;
-    BigInteger requestId;
-    String address;
-    int port;
-    int i_finger_table;
-    byte[] data;
+    public static String CRLF = "\r\n";
+    public double version;
+    public String messageType;
+    public BigInteger requestId;
+    public String address;
+    public int port;
+    public int i_finger_table;
+    public byte[] data;
 
     public MessageFactoryChord(){}
 
     public BigInteger getRequestId() {
         return requestId;
+    }
+
+    public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port, byte[] body) {
+
+        byte[] header = createMessage(version, messageType, requestId, address, port);
+        byte[] message = new byte[header.length + body.length];
+
+        System.arraycopy(header,0,message,0, header.length);
+        System.arraycopy(body,0,message,header.length,body.length);
+
+        return message;
+
+        //return (version + " " + messageType + " " + requestId + " " + address + " " + port + " " + i + " " + data+ CRLF + CRLF).getBytes();
     }
 
     public static byte[] createMessage(double version, String messageType, BigInteger requestId){

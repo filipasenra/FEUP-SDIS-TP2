@@ -1,12 +1,21 @@
 package com.assigment_2;
 
+import com.assigment_2.Chord.MessageFactoryChord;
 import com.assigment_2.Chord.ReceivedChordMessagesHandler;
+import com.assigment_2.Chord.SimpleNode;
 import com.assigment_2.Chunk.BackUpChunk;
 import com.assigment_2.Chunk.Chunk;
+import com.assigment_2.SSLEngine.SSLEngineClient;
 import com.assigment_2.SSLEngine.SSLEngineServer;
 import com.assigment_2.Storage.FileInfo;
 
+import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -33,11 +42,41 @@ public class Peer extends SSLEngineServer implements InterfacePeer{
         this.version = version;
     }
 
-    public void backup(String file_path, int replication_degree) {
+    //TODO: Change this to the future backup file ?
+
+    protected BigInteger generateFileId(String filename, long lastModified, String owner) {
+
+        String input = filename + lastModified + owner;
+
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            byte[] encoded = digest.digest(input.getBytes());
+            return new BigInteger(1,encoded);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new BigInteger(1,"0".getBytes());
+        }
+    }
+
+    //===========================================================
+
+    public void backup(String filepath, int replication_degree) throws Exception {
         System.out.println("\nBACKUP SERVICE");
-        System.out.println(" > File path: " + file_path);
+        System.out.println(" > File path: " + filepath);
         System.out.println(" > Replication Degree: " + replication_degree);
         System.out.println();
+
+        File file = new File(filepath);
+        byte[] fileData = Files.readAllBytes(file.toPath());
+        BigInteger fileID = this.generateFileId(file.getName(), file.lastModified(), file.getParent());
+        SimpleNode sn = PeerClient.getNode().find_successor(fileID);
+
+        byte[] message = MessageFactoryChord.createMessage(3, "BACKUP", fileID, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), fileData);
+        SSLEngineClient client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
+        client.connect();
+        client.write(message);
+        client.read();
+        client.shutdown();
 
         //TODO: change this
         //exec.execute(new Thread(() -> MDB.backupFile(this.version, this.id, file_path, replication_degree)));

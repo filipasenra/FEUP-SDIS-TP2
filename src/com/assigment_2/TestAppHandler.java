@@ -32,7 +32,7 @@ public class TestAppHandler {
 
         try {
             peer.backup(arguments[0], Integer.parseInt(arguments[1]));
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
