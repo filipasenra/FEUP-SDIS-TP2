@@ -38,7 +38,7 @@ public class Backup implements Runnable{
             messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
             if (messageFactoryChord.messageType.equals("BACKUP_COMPLETE")) {
-                System.out.println("RECEBEU UM BACKUP COMPLETE");
+                PeerClient.getStorage().incStoredFilesCounter(fileId, messageFactoryChord.requestId);
             }
 
         } catch (Exception e) {

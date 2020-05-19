@@ -2,6 +2,7 @@ package com.assigment_2.Storage;
 
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Storage implements Serializable {
@@ -9,18 +10,8 @@ public class Storage implements Serializable {
     private int occupiedSpace;
 
     private final ConcurrentHashMap<BigInteger, FileInfo> backedUpFiles = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<BigInteger, ArrayList<BigInteger>> storedFilesCounter = new ConcurrentHashMap<BigInteger, ArrayList<BigInteger>>();
 
-    //private final ConcurrentHashMap<BigInteger, ArrayList<BigInteger>>
-    /*private final ConcurrentHashMap<Pair<String, Integer>, Chunk> storedChunks = new ConcurrentHashMap<>();
-
-    private final ConcurrentHashMap<Pair<String, Integer>, Integer> chunksGlobalCounter = new ConcurrentHashMap<>();
-
-
-
-    private final ConcurrentHashMap<Pair<String, Integer>, byte[]> recoveredChunks = new ConcurrentHashMap<>();
-
-    public final CopyOnWriteArrayList<Pair<String, Integer>> pendingChunks = new CopyOnWriteArrayList<>();
-*/
     public Storage() {
         this.overallSpace = -1;
         this.occupiedSpace = 0;
@@ -28,6 +19,35 @@ public class Storage implements Serializable {
 
     public ConcurrentHashMap<BigInteger, FileInfo> getBackedUpFiles() {
         return backedUpFiles;
+    }
+
+    public boolean addBackedUpFile(BigInteger fileId, FileInfo fileInfo){
+        if(!this.backedUpFiles.containsKey(fileId)) {
+            this.backedUpFiles.put(fileId, fileInfo);
+            return true;
+        }
+        else {
+            System.out.println("File already backed up!");
+            return false;
+        }
+    }
+
+    public ConcurrentHashMap<BigInteger, ArrayList<BigInteger>> getStoredFilesCounter() {
+        return storedFilesCounter;
+    }
+
+    public void incStoredFilesCounter(BigInteger fileId, BigInteger peerId) {
+        if(!this.storedFilesCounter.containsKey(fileId)) {
+            ArrayList<BigInteger> firstEntry = new ArrayList<>();
+            firstEntry.add(peerId);
+            this.storedFilesCounter.put(fileId, firstEntry);
+        }
+        else {
+            ArrayList<BigInteger> prevEntries = storedFilesCounter.get(fileId);
+            prevEntries.add(peerId);
+            this.storedFilesCounter.put(fileId, prevEntries);
+        }
+
     }
 
     /*public void setOverallSpace(int overallSpace) {
@@ -231,19 +251,6 @@ public class Storage implements Serializable {
         }
 
     }*/
-
-    public boolean addBackedUpFile(BigInteger fileId, FileInfo fileInfo){
-
-        if(!this.backedUpFiles.containsKey(fileId)) {
-            this.backedUpFiles.put(fileId, fileInfo);
-            return true;
-        }
-        else {
-            System.out.println("File already backed up!");
-            return false;
-        }
-
-    }
 
     /*public BackUpChunk getBackUpChunk(String fileId, int chunkNo) {
 
