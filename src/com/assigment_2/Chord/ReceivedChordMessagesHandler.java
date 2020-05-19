@@ -110,7 +110,8 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
             e.printStackTrace();
         }
 
-
+        byte[] message = MessageFactoryChord.createMessage(3, "BACKUP_COMPLETE", PeerClient.getNode().id);
+        PeerClient.getObj().write(socketChannel, engine, message);
     }
 
 }
