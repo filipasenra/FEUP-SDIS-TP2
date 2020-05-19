@@ -2,7 +2,6 @@ package com.assigment_2;
 
 import com.assigment_2.Chord.Node;
 import com.assigment_2.Chord.SimpleNode;
-import com.assigment_2.SSLEngine.ServerRunnable;
 import com.assigment_2.Storage.Storage;
 
 import java.io.*;
@@ -19,7 +18,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 public class PeerClient {
 
     private static final int M = 8;
-    private static ServerRunnable serverRunnable;
     private final static String serializeObjectName = "Storage";
     static private Double version;
     private static String id;
@@ -67,9 +65,7 @@ public class PeerClient {
 
         obj = new Peer(version, id, "TLSv1.2", address, port);
 
-        serverRunnable = new ServerRunnable(obj);
-
-        exec.execute(serverRunnable);
+        exec.execute(obj);
 
         try {
             InterfacePeer peer = (InterfacePeer) UnicastRemoteObject.exportObject(obj, 0);
@@ -111,7 +107,7 @@ public class PeerClient {
     //saves this peer storage in a file called storage.ser
     private static void saveStorageIntoFile() {
 
-        serverRunnable.stop();
+        obj.stop();
 
         try {
             String filename = PeerClient.getId() + "/" + serializeObjectName + ".ser";

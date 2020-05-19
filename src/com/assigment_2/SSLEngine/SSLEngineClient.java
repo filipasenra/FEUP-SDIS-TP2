@@ -55,6 +55,8 @@ public class SSLEngineClient extends SSLEngineHandler {
         this.address = address;
         this.port = port;
 
+
+        //TODO: CHANGE KEYS
         KeyManager[] keyManagers = createKeyManagers("../com/assigment_2/Resources/client.jks", "storepass", "keypass");
         TrustManager[] trustManagers = createTrustManagers("../com/assigment_2/Resources/trustedCerts.jks", "storepass");
 
@@ -64,14 +66,7 @@ public class SSLEngineClient extends SSLEngineHandler {
         this.engine = context.createSSLEngine(address, port);
         this.engine.setUseClientMode(true);
 
-        SSLSession session = engine.getSession();
-
-        ByteBuffer myAppData = ByteBuffer.allocate(session.getApplicationBufferSize());
-        ByteBuffer peerAppData = ByteBuffer.allocate(session.getApplicationBufferSize());
-        ByteBuffer myNetData = ByteBuffer.allocate(session.getPacketBufferSize());
-        ByteBuffer peerNetData = ByteBuffer.allocate(session.getPacketBufferSize());
-
-        setByteBuffers(myAppData, myNetData, peerAppData, peerNetData);
+        setByteBuffers(engine.getSession());
 
     }
 
@@ -88,16 +83,9 @@ public class SSLEngineClient extends SSLEngineHandler {
         this.socketChannel.configureBlocking(true);
         this.socketChannel.connect(new InetSocketAddress(this.address, this.port));
 
-        // Complete connection
-        while (!this.socketChannel.finishConnect()) {
-            // do something until connect completed
-        }
-
-        //Created byte buffers for holding application and encoded data in constructor
-
         // Do initial handshake
         engine.beginHandshake();
-        return doHandshake(socketChannel, engine);
+        return handshake(socketChannel, engine);
     }
 
     /**

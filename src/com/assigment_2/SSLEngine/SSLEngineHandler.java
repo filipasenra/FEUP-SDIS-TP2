@@ -23,7 +23,7 @@ public abstract class SSLEngineHandler {
 
     /**
      * ByteBuffer that contains this peer's data (encrypted) to be sent to the other peer'
-     * Generated after encrypting {@link SSLEngineHandler#myNetData} with {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
+     * Generated after encrypting SSLEngineHandler#myNetData with {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
      *
      * It should be initialized using {@link SSLSession#getPacketBufferSize()}
      */
@@ -32,7 +32,7 @@ public abstract class SSLEngineHandler {
 
     /**
      * ByteBuffer that contains the other peer's data (decrypted) received from the other peer
-     * Obtain after {@link SSLEngineHandler#peerAppData} is decrypted by using {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)}
+     * Obtain after SSLEngineHandler#peerAppData is decrypted by using {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)}
      *
      * It Must be large enough to hold the application data from any peer.
      * It should be initialized using {@link SSLSession#getPacketBufferSize()}
@@ -63,16 +63,15 @@ public abstract class SSLEngineHandler {
     /**
      * Sets buffers with the correct values.
      *
-     * @param myAppData   - ByteBuffer that contains the other peer's data (decrypted) received from the other peer'
-     * @param myNetData   - ByteBuffer that contains this peer's data (encrypted) to be sent to the other peer'
-     * @param peerAppData - ByteBuffer that contains the other peer's data (decrypted) received from the other peer'
-     * @param peerNetData - ByteBuffer that contains the other peer's data (encrypted) received from the other peer'
+     * @param sslSession -
      */
-    public void setByteBuffers(ByteBuffer myAppData, ByteBuffer myNetData, ByteBuffer peerAppData, ByteBuffer peerNetData) {
-        this.myAppData = myAppData;
-        this.myNetData = myNetData;
-        this.peerAppData = peerAppData;
-        this.peerNetData = peerNetData;
+    protected void setByteBuffers(SSLSession sslSession){
+
+        myAppData = ByteBuffer.allocate(sslSession.getApplicationBufferSize());
+        myNetData = ByteBuffer.allocate(sslSession.getPacketBufferSize());
+        peerAppData = ByteBuffer.allocate(sslSession.getApplicationBufferSize());
+        peerNetData = ByteBuffer.allocate(sslSession.getPacketBufferSize());
+
     }
 
 
@@ -84,7 +83,7 @@ public abstract class SSLEngineHandler {
      * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
      * @return True if the connection was successful, false otherwise.
      */
-    protected boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws Exception {
+    protected boolean handshake(SocketChannel socketChannel, SSLEngine engine) throws Exception {
 
         myNetData.clear();
         peerNetData.clear();
@@ -412,20 +411,20 @@ public abstract class SSLEngineHandler {
     /**
      * Creates the key managers using a JKS keystore as an input.
      *
-     * @param filepath         - the path to the JKS keystore.
+     * @param filePath         - the path to the JKS keystore.
      * @param keystorePassword - the keystore's password.
      * @param keyPassword      - the key's password.
      * @return {@link KeyManager} array.
      * @throws Exception
      */
-    protected KeyManager[] createKeyManagers(String filepath, String keystorePassword, String keyPassword) throws Exception {
+    protected KeyManager[] createKeyManagers(String filePath, String keystorePassword, String keyPassword) throws Exception {
 
         // Create and initialize the SSLContext with key material
         char[] passphrase = keystorePassword.toCharArray();
 
         // First initialize the key material
         KeyStore ksKeys = KeyStore.getInstance("JKS");
-        ksKeys.load(new FileInputStream(filepath), passphrase);
+        ksKeys.load(new FileInputStream(filePath), passphrase);
 
         // KeyManagers decide which key material to use
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("PKIX");
@@ -438,19 +437,19 @@ public abstract class SSLEngineHandler {
     /**
      * Creates the trust managers using a JKS keystore as an input.
      *
-     * @param filepath         - the path to the JKS keystore.
+     * @param filePath         - the path to the JKS keystore.
      * @param keystorePassword - the keystore's password.
      * @return {@link TrustManager} array.
      * @throws Exception
      */
-    protected TrustManager[] createTrustManagers(String filepath, String keystorePassword) throws Exception {
+    protected TrustManager[] createTrustManagers(String filePath, String keystorePassword) throws Exception {
 
         // Create and initialize the SSLContext with key material
         char[] passphrase = keystorePassword.toCharArray();
 
         // First initialize the trust material
         KeyStore ksTrust = KeyStore.getInstance("JKS");
-        ksTrust.load(new FileInputStream(filepath), passphrase);
+        ksTrust.load(new FileInputStream(filePath), passphrase);
 
         // TrustManagers decide whether to allow connections
         TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX");
