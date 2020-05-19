@@ -55,7 +55,6 @@ public class SSLEngineClient extends SSLEngineHandler {
         this.address = address;
         this.port = port;
 
-
         //TODO: CHANGE KEYS
         KeyManager[] keyManagers = createKeyManagers("../com/assigment_2/Resources/client.jks", "storepass", "keypass");
         TrustManager[] trustManagers = createTrustManagers("../com/assigment_2/Resources/trustedCerts.jks", "storepass");
@@ -82,6 +81,9 @@ public class SSLEngineClient extends SSLEngineHandler {
         this.socketChannel = SocketChannel.open();
         this.socketChannel.configureBlocking(true);
         this.socketChannel.connect(new InetSocketAddress(this.address, this.port));
+
+        //TODO: change this to a more elegant way!
+        while(!socketChannel.finishConnect());
 
         // Do initial handshake
         engine.beginHandshake();

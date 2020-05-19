@@ -119,6 +119,9 @@ public abstract class SSLEngineHandler {
             }
         }
 
+
+        System.out.println("End Handshake!");
+
         return true;
 
 
