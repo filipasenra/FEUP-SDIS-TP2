@@ -1,4 +1,4 @@
-package com.assigment_2;
+package com.assigment_2.Protocol;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import com.assigment_2.Chord.SimpleNode;
+import com.assigment_2.PeerClient;
 import com.assigment_2.SSLEngine.SSLEngineClient;
 import com.assigment_2.Chord.MessageFactoryChord;
 
@@ -14,29 +15,12 @@ public class Backup implements Runnable{
     BigInteger fileId;
     int replicationDegree;
 
-    Backup(String filepath, int replicationDegree) throws IOException {
-        File file = new File(filepath);
-        byte[] fileData = Files.readAllBytes(file.toPath());
-        BigInteger fileId = this.generateFileId(file.getName(), file.lastModified(), file.getParent());
+    public Backup(BigInteger fileId, byte[] fileData, int replicationDegree) throws IOException {
 
         this.fileData = fileData;
         this.fileId = fileId;
         this.replicationDegree = replicationDegree;
     }
-
-    protected BigInteger generateFileId(String filename, long lastModified, String owner) {
-        try {
-            String input = filename + lastModified + owner;
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
-            byte[] encoded = digest.digest(input.getBytes());
-
-            return new BigInteger(1,encoded);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new BigInteger(1,"0".getBytes());
-        }
-    }
-
 
     @Override
     public void run() {
@@ -54,12 +38,25 @@ public class Backup implements Runnable{
             messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
             if (messageFactoryChord.messageType.equals("BACKUP_COMPLETE")) {
-
+                System.out.println("RECEBEU UM BACKUP COMPLETE");
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+    }
+
+    public static BigInteger generateFileId(String filename, long lastModified, String owner) {
+        try {
+            String input = filename + lastModified + owner;
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            byte[] encoded = digest.digest(input.getBytes());
+
+            return new BigInteger(1,encoded);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new BigInteger(1,"0".getBytes());
+        }
     }
 }

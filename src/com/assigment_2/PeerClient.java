@@ -24,9 +24,9 @@ public class PeerClient {
     private static String address;
     private static int port;
 
-    private static Node node;
-
     private static Storage storage = new Storage();
+
+    private static Node node;
 
     private static final ScheduledThreadPoolExecutor exec = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(250);
     private static Peer obj;

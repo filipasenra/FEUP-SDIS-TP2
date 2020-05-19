@@ -1,8 +1,7 @@
-package com.assigment_2.Protocol;
+package com.assigment_2.Storage;
 
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Storage implements Serializable {
