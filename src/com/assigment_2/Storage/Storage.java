@@ -1,8 +1,8 @@
 package com.assigment_2.Storage;
 
-import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.ArrayList;
+import java.math.BigInteger;
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Storage implements Serializable {
@@ -11,6 +11,7 @@ public class Storage implements Serializable {
 
     private final ConcurrentHashMap<BigInteger, FileInfo> backedUpFiles = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<BigInteger, ArrayList<BigInteger>> storedFilesCounter = new ConcurrentHashMap<BigInteger, ArrayList<BigInteger>>();
+    private final ArrayList<BigInteger> storedFiles = new ArrayList<>();
 
     public Storage() {
         this.overallSpace = -1;
@@ -48,6 +49,19 @@ public class Storage implements Serializable {
             this.storedFilesCounter.put(fileId, prevEntries);
         }
 
+    }
+
+    public ArrayList<BigInteger> getStoredFiles() {
+        return storedFiles;
+    }
+
+    public boolean addStoredFile(BigInteger fileId){
+        if(!this.storedFiles.contains(fileId)) {
+            this.storedFiles.add(fileId);
+            return true;
+        }
+
+        return false;
     }
 
     /*public void setOverallSpace(int overallSpace) {

@@ -92,26 +92,31 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
     private void manageBackup() throws Exception {
 
-        String filename = PeerClient.getId() + "/" + messageFactoryChord.requestId;
+        if (!PeerClient.getStorage().getStoredFiles().contains(messageFactoryChord.requestId)) {
 
-        File file = new File(filename);
-        try {
+            PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId);
+            String filename = PeerClient.getId() + "/" + messageFactoryChord.requestId;
 
-            if (!file.exists()) {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
+            File file = new File(filename);
+            try {
 
-                FileOutputStream fos = new FileOutputStream(filename);
-                fos.write(messageFactoryChord.data, 0, messageFactoryChord.data.length);
+                if (!file.exists()) {
+                    file.getParentFile().mkdirs();
+                    file.createNewFile();
 
-                fos.close();
+                    FileOutputStream fos = new FileOutputStream(filename);
+                    fos.write(messageFactoryChord.data, 0, messageFactoryChord.data.length);
+
+                    fos.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        byte[] message = MessageFactoryChord.createMessage(3, "BACKUP_COMPLETE", PeerClient.getNode().id);
-        PeerClient.getObj().write(socketChannel, engine, message);
+            byte[] message = MessageFactoryChord.createMessage(3, "BACKUP_COMPLETE", PeerClient.getNode().id);
+            PeerClient.getObj().write(socketChannel, engine, message);
+
+        }
     }
 
 }
