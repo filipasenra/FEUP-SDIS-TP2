@@ -78,10 +78,10 @@ public class PeerClient {
         }
 
 
-        getStorageFromFile();
+        //getStorageFromFile();
 
         //Saves storage before shutdown
-        Runtime.getRuntime().addShutdownHook(new Thread(PeerClient::saveStorageIntoFile));
+        //Runtime.getRuntime().addShutdownHook(new Thread(PeerClient::saveStorageIntoFile));
 
         System.out.println("Peer " + getId() + " ready");
 

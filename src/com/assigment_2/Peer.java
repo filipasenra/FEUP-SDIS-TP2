@@ -113,8 +113,8 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
             state.append("\t\tId: ").append(chunkEntry.getValue().getId()).append("\n");
             state.append("\t\t\tSize (in KBytes): ").append(chunkEntry.getValue().getData().length).append("\n");
             state.append("\t\t\t\tPerceived Replication Degree: ").append(chunkEntry.getValue().getNumStoredTimes()).append("\n");
-        }
-*/
+        }*/
+
         return state.toString();
     }
 }
