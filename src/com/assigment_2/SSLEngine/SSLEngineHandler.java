@@ -216,7 +216,7 @@ public abstract class SSLEngineHandler {
 
     protected void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws Exception {
         myAppData.clear();
-        myAppData = ByteBuffer.allocateDirect(message.length);
+        myAppData = ByteBuffer.allocate(message.length);
         myAppData.put(message);
         myAppData.flip();
 
