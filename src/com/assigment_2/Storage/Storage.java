@@ -1,40 +1,37 @@
-package com.assigment_2.Storage;
+package com.assigment_2.Protocol;
 
-import com.assigment_2.Chunk.BackUpChunk;
-import com.assigment_2.Chunk.Chunk;
-import com.assigment_2.Pair;
-import com.assigment_2.PeerClient;
-import com.assigment_2.Protocol.MessageFactory;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Storage implements Serializable {
     private int overallSpace;
     private int occupiedSpace;
 
-    private final ConcurrentHashMap<Pair<String, Integer>, Chunk> storedChunks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<BigInteger, FileInfo> backedUpFiles = new ConcurrentHashMap<>();
+
+    //private final ConcurrentHashMap<BigInteger, ArrayList<BigInteger>>
+    /*private final ConcurrentHashMap<Pair<String, Integer>, Chunk> storedChunks = new ConcurrentHashMap<>();
 
     private final ConcurrentHashMap<Pair<String, Integer>, Integer> chunksGlobalCounter = new ConcurrentHashMap<>();
 
-    private final ConcurrentHashMap<String, FileInfo> backedUpFiles = new ConcurrentHashMap<>();
+
 
     private final ConcurrentHashMap<Pair<String, Integer>, byte[]> recoveredChunks = new ConcurrentHashMap<>();
 
     public final CopyOnWriteArrayList<Pair<String, Integer>> pendingChunks = new CopyOnWriteArrayList<>();
-
+*/
     public Storage() {
         this.overallSpace = -1;
         this.occupiedSpace = 0;
     }
 
-    public void setOverallSpace(int overallSpace) {
+    public ConcurrentHashMap<BigInteger, FileInfo> getBackedUpFiles() {
+        return backedUpFiles;
+    }
+
+    /*public void setOverallSpace(int overallSpace) {
         this.overallSpace = overallSpace * 1000;
 
         while(this.overallSpace < occupiedSpace ) {
@@ -57,9 +54,7 @@ public class Storage implements Serializable {
 
                     System.out.println(" > SENDING MESSAGE: " + chunkToEliminate.version + " REMOVED " + PeerClient.getId() + " " + chunkToEliminate.fileId + " " + chunkToEliminate.chunkNo);
                     byte[] message = MessageFactory.createMessage(chunkToEliminate.version, "REMOVED", PeerClient.getId(), chunkToEliminate.fileId, chunkToEliminate.chunkNo);
-
-                    //TODO: change this
-                    //PeerClient.getMC().sendMessage(message);
+                    PeerClient.getMC().sendMessage(message);
                 }
 
             } catch (IOException e) {
@@ -122,9 +117,8 @@ public class Storage implements Serializable {
                 }
             }
 
-            //TODO: change this
             //SEND CHUNK STORAGE CONFIRMATION MESSAGE
-            //PeerClient.getMC().confirmStore(chunk.version, PeerClient.getId(), chunk.fileId, chunk.chunkNo);
+            PeerClient.getMC().confirmStore(chunk.version, PeerClient.getId(), chunk.fileId, chunk.chunkNo);
 
             chunk.peersBackingUpChunk.add(PeerClient.getId());
             this.storedChunks.put(key, chunk);
@@ -230,22 +224,29 @@ public class Storage implements Serializable {
     public void addChunkToBackUp(String fileId, int chunkNo, BackUpChunk chunk) {
 
         if (!this.backedUpFiles.containsKey(fileId)) {
-           return;
+            return;
         }
 
         if (!this.backedUpFiles.get(fileId).backedUpChunk.containsKey(chunkNo)) {
             this.backedUpFiles.get(fileId).backedUpChunk.put(chunkNo, chunk);
         }
 
-    }
+    }*/
 
-    public void addBackedUpFiles(String fileId, FileInfo fileInfo){
+    public boolean addBackedUpFile(BigInteger fileId, FileInfo fileInfo){
 
-        if(!this.backedUpFiles.containsKey(fileId))
+        if(!this.backedUpFiles.containsKey(fileId)) {
             this.backedUpFiles.put(fileId, fileInfo);
+            return true;
+        }
+        else {
+            System.out.println("File already backed up!");
+            return false;
+        }
+
     }
 
-    public BackUpChunk getBackUpChunk(String fileId, int chunkNo) {
+    /*public BackUpChunk getBackUpChunk(String fileId, int chunkNo) {
 
         if(!this.backedUpFiles.containsKey(fileId))
             return null;
@@ -262,5 +263,6 @@ public class Storage implements Serializable {
 
     public void addPendingChunks(Pair<String, Integer> pendingChunksPair) {
         this.pendingChunks.add(pendingChunksPair);
-    }
+    }*/
 }
+
