@@ -75,8 +75,8 @@ public class Peer extends SSLEngineServer implements InterfacePeer{
         SSLEngineClient client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
         client.connect();
         client.write(message);
-        client.read();
-        client.shutdown();
+        /*client.read();
+        client.shutdown();*/
 
         //TODO: change this
         //exec.execute(new Thread(() -> MDB.backupFile(this.version, this.id, file_path, replication_degree)));

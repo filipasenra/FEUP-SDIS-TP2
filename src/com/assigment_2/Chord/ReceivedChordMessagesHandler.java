@@ -102,7 +102,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                 file.createNewFile();
 
                 FileOutputStream fos = new FileOutputStream(filename);
-                fos.write(messageFactoryChord.data);
+                fos.write(messageFactoryChord.data, 0, messageFactoryChord.data.length);
 
                 fos.close();
             }
