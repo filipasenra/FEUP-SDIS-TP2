@@ -17,7 +17,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 * */
 public class PeerClient {
 
-    private static final int M = 8;
+    public static final int M = 8;
     private final static String serializeObjectName = "Storage";
     static private Double version;
     private static String id;
@@ -27,6 +27,8 @@ public class PeerClient {
     private static Storage storage = new Storage();
 
     private static Node node;
+
+    private static SimpleNode simpleNode;
 
     private static final ScheduledThreadPoolExecutor exec = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(250);
     private static Peer obj;
@@ -54,10 +56,8 @@ public class PeerClient {
         address = args[2];
         port = Integer.parseInt(args[3]);
 
-        SimpleNode simpleNode = null;
-
         if(args.length == 6){
-            simpleNode = new SimpleNode(args[4], Integer.parseInt(args[5]));
+            simpleNode = new SimpleNode(args[4], Integer.parseInt(args[5]), M);
         }
 
         node = new Node(address, port, M);
@@ -86,6 +86,10 @@ public class PeerClient {
         System.out.println("Peer " + getId() + " ready");
 
         return true;
+    }
+
+    public static SimpleNode getSimpleNode() {
+        return simpleNode;
     }
 
     public static Node getNode() {

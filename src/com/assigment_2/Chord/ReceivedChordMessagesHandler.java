@@ -54,7 +54,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
     private void manageUpdateFingerTable() throws Exception {
 
-        PeerClient.getNode().update_finger_table(new SimpleNode(messageFactoryChord.address, messageFactoryChord.port), messageFactoryChord.i_finger_table);
+        PeerClient.getNode().update_finger_table(new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, PeerClient.getNode().m), messageFactoryChord.i_finger_table);
 
         byte[] message = MessageFactoryChord.createMessage(3, "FINGERTABLE_UPDATED");
         PeerClient.getObj().write(socketChannel, engine, message);
@@ -62,7 +62,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
     private void manageUpdatePredecessor() throws Exception {
 
-        PeerClient.getNode().setPredecessorObj(new SimpleNode(messageFactoryChord.address, messageFactoryChord.port));
+        PeerClient.getNode().setPredecessorObj(new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, PeerClient.getNode().m));
 
         byte[] message = MessageFactoryChord.createMessage(3, "PREDECESSOR_UPDATED");
         PeerClient.getObj().write(socketChannel, engine, message);

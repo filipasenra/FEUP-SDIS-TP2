@@ -8,7 +8,7 @@ public class Node extends SimpleNode {
     private final Finger[] fingerTable;
 
     public Node(String address, int port, int m) {
-        super(address, port);
+        super(address, port, m);
 
         this.fingerTable = new Finger[m];
 

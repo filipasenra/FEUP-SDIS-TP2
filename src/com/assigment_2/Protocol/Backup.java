@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import com.assigment_2.Chord.SimpleNode;
+import com.assigment_2.Peer;
 import com.assigment_2.PeerClient;
 import com.assigment_2.SSLEngine.SSLEngineClient;
 import com.assigment_2.Chord.MessageFactoryChord;
@@ -51,7 +52,7 @@ public class Backup implements Runnable{
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
             byte[] encoded = digest.digest(input.getBytes());
 
-            return new BigInteger(1,encoded);
+            return new BigInteger(1,encoded).mod(BigInteger.valueOf((long) Math.pow(2, PeerClient.M)));
         } catch (Exception e) {
             e.printStackTrace();
             return new BigInteger(1,"0".getBytes());

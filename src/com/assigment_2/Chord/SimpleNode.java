@@ -10,27 +10,29 @@ public class SimpleNode {
     BigInteger id;
     String address;
     int port;
+    int m;
 
-    public SimpleNode(String address, int port) {
+    public SimpleNode(String address, int port, int m) {
         this.address = address;
         this.port = port;
+        this.m = m;
 
         //TODO: probably improve this id
-        this.id = createId(address, port);
+        this.id = createId(address, port, m);
     }
 
     public BigInteger getId() {
         return id;
     }
 
-    private BigInteger createId(String address, int port) {
+    private BigInteger createId(String address, int port, int m) {
 
         String input = address + "-" + port;
 
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
             byte[] encoded = digest.digest(input.getBytes());
-            return new BigInteger(1,encoded);
+            return new BigInteger(1,encoded).mod(BigInteger.valueOf((long) Math.pow(2, m)));
         } catch (Exception e) {
             e.printStackTrace();
             return new BigInteger(1,"0".getBytes());
@@ -54,7 +56,7 @@ public class SimpleNode {
 
         if (messageFactoryChord.messageType.equals("SUCCESSOR")) {
 
-            return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port);
+            return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, m);
 
         } else {
             throw new IllegalStateException("ERROR: Didn't received a SUCCESSOR answer to FIND_SUCCESSOR");
@@ -78,10 +80,11 @@ public class SimpleNode {
 
         if (messageFactoryChord.messageType.equals("PREDECESSOR")) {
 
-            return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port);
+            return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, m);
 
         } else {
 
+            System.out.println(new String(client.getPeerAppData().array()));
             throw new IllegalStateException("ERROR: Didn't received a PREDECESSOR answer to FIND_PREDECESSOR");
 
         }
