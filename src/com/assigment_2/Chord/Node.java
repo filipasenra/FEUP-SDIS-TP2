@@ -14,6 +14,9 @@ public class Node extends SimpleNode {
 
     }
 
+    public Finger[] getFingerTable() {
+        return fingerTable;
+    }
 
     //ask node to find id's successor
     public SimpleNode find_successor(BigInteger id) throws Exception {
