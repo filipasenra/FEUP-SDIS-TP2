@@ -136,6 +136,7 @@ public abstract class SSLEngineHandler {
      */
     protected void read(SocketChannel socketChannel, SSLEngine engine) throws Exception {
 
+        Thread.sleep(50);
         System.out.println("Reading...");
 
         peerNetData.clear();

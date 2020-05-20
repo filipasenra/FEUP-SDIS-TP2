@@ -9,7 +9,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.channels.SocketChannel;
-import java.util.Arrays;
 
 public class ReceivedChordMessagesHandler implements MessagesHandler {
     MessageFactoryChord messageFactoryChord;
@@ -35,11 +34,8 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                 case "FIND_PREDECESSOR":
                     manageFindPredecessor();
                     break;
-                case "UPDATE_PREDECESSOR":
-                    manageUpdatePredecessor();
-                    break;
-                case "UPDATE_FINGERTABLE":
-                    manageUpdateFingerTable();
+                case "NOTIFY":
+                    manageNotify();
                     break;
                 case "BACKUP":
                     manageBackup();
@@ -52,29 +48,26 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
         }
     }
 
-    private void manageUpdateFingerTable() throws Exception {
+    private void manageNotify() throws Exception {
 
-        PeerClient.getNode().update_finger_table(new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, PeerClient.getNode().m), messageFactoryChord.i_finger_table);
+        PeerClient.getNode().notify(new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, PeerClient.getNode().getM()));
 
-        byte[] message = MessageFactoryChord.createMessage(3, "FINGERTABLE_UPDATED");
+        byte[] message = MessageFactoryChord.createMessage(3, "OK");
+
         PeerClient.getObj().write(socketChannel, engine, message);
-    }
-
-    private void manageUpdatePredecessor() throws Exception {
-
-        PeerClient.getNode().setPredecessorObj(new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, PeerClient.getNode().m));
-
-        byte[] message = MessageFactoryChord.createMessage(3, "PREDECESSOR_UPDATED");
-        PeerClient.getObj().write(socketChannel, engine, message);
-
     }
 
     private void manageFindPredecessor() throws Exception {
 
         BigInteger request_id = messageFactoryChord.getRequestId();
-        SimpleNode node = PeerClient.getNode().find_predecessor(request_id);
+        SimpleNode predecessor =  PeerClient.getNode().predecessor;
 
-        byte[] message = MessageFactoryChord.createMessage(3, "PREDECESSOR", request_id, node.getAddress(), node.getPort());
+        byte[] message;
+        if(predecessor != null)
+           message = MessageFactoryChord.createMessage(3, "PREDECESSOR", request_id, predecessor.getAddress(), predecessor.getPort());
+        else
+            message = MessageFactoryChord.createMessage(3, "NOTFOUND");
+
         PeerClient.getObj().write(socketChannel, engine, message);
 
     }

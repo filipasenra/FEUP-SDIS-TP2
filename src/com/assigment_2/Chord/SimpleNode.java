@@ -30,7 +30,7 @@ public class SimpleNode {
         String input = address + "-" + port;
 
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] encoded = digest.digest(input.getBytes());
             return new BigInteger(1,encoded).mod(BigInteger.valueOf((long) Math.pow(2, m)));
         } catch (Exception e) {
@@ -82,19 +82,24 @@ public class SimpleNode {
 
             return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, m);
 
+        } else if(messageFactoryChord.messageType.equals("NOTFOUND")) {
+
+            return null;
+
         } else {
 
             System.out.println(new String(client.getPeerAppData().array()));
-            throw new IllegalStateException("ERROR: Didn't received a PREDECESSOR answer to FIND_PREDECESSOR");
+            throw new IllegalStateException("ERROR: Didn't received a PREDECESSOR OR NOTFOUND answer to FIND_PREDECESSOR");
 
         }
 
     }
 
-    protected void update_finger_table(SimpleNode s, int i) throws Exception {
 
+    protected void notifyIntern(SimpleNode node) throws Exception {
 
-        byte[] message = MessageFactoryChord.createMessage(3, "UPDATE_FINGERTABLE", s.id, s.address, s.port, i);
+        System.out.println("SENDING NOTIFY");
+        byte[] message = MessageFactoryChord.createMessage(3, "NOTIFY", node.id, node.address, node.port);
 
         SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
         client.connect();
@@ -105,36 +110,18 @@ public class SimpleNode {
         MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
         messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-        if (!messageFactoryChord.messageType.equals("FINGERTABLE_UPDATED")) {
+        if (messageFactoryChord.messageType.equals("OK")) {
 
-            throw new IllegalStateException("ERROR: Didn't received a PREDECESSOR answer to FIND_PREDECESSOR");
+            return;
+
+        } else {
+
+            System.out.println(new String(client.getPeerAppData().array()));
+            throw new IllegalStateException("ERROR: Didn't received a OK answer to FIND_PREDECESSOR");
 
         }
 
     }
-
-    public void set_predecessor(SimpleNode s) throws Exception {
-
-        byte[] message = MessageFactoryChord.createMessage(3, "UPDATE_PREDECESSOR", s.id, s.address, s.port);
-
-        SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
-        client.connect();
-        client.write(message);
-        client.read();
-        client.shutdown();
-
-        MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
-        messageFactoryChord.parseMessage(client.getPeerAppData().array());
-
-        if (!messageFactoryChord.messageType.equals("PREDECESSOR_UPDATED")) {
-
-            throw new IllegalStateException("ERROR: Didn't received a PREDECESSOR_UPDATED answer to UPDATE_PREDECESSOR");
-
-        }
-
-
-    }
-
 
     public String getAddress() {
         return address;
@@ -142,5 +129,9 @@ public class SimpleNode {
 
     public int getPort() {
         return port;
+    }
+
+    public int getM() {
+        return m;
     }
 }

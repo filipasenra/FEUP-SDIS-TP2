@@ -11,6 +11,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /*
 * Class that initiates a Peer
@@ -62,6 +63,10 @@ public class PeerClient {
 
         node = new Node(address, port, M);
         node.join(simpleNode);
+
+        node.printInfo();
+
+        exec.scheduleAtFixedRate(node, 1500, 3500, TimeUnit.MILLISECONDS);
 
         obj = new Peer(version, id, "TLSv1.2", address, port);
 
