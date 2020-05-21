@@ -78,7 +78,12 @@ public class Node extends SimpleNode implements Runnable {
     // verifies n's immediate successor and tell the successor about n
     public void stabilize() throws Exception {
 
-        SimpleNode x = (this.successor.id.equals(this.id)) ? this.predecessor : this.successor.find_predecessor();
+        SimpleNode x;
+
+        if(this.successor.id.equals(this.id))
+            x = this.predecessor;
+        else
+            x = this.successor.find_predecessor();
 
         if (x != null && !this.id.equals(x.id) && (this.id.equals(this.successor.id) || isBetween(x.id, this.id, successor.id))) {
             this.successor = x;
