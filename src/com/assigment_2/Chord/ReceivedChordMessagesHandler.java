@@ -1,5 +1,6 @@
 package com.assigment_2.Chord;
 
+import com.assigment_2.Peer;
 import com.assigment_2.PeerClient;
 import com.assigment_2.SSLEngine.MessagesHandler;
 

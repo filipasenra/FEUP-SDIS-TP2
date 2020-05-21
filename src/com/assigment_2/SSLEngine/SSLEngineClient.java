@@ -1,7 +1,6 @@
 package com.assigment_2.SSLEngine;
 
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.SecureRandom;
 
@@ -127,10 +126,10 @@ public class SSLEngineClient extends SSLEngineHandler {
      */
     public void shutdown() throws Exception {
 
-        System.out.println("Closing connection to server...");
+        //System.out.println("Closing connection to server...");
         shutdown(socketChannel, engine);
         exec.shutdown();
-        System.out.println("Closed. See you later!");
+        //System.out.println("Closed. See you later!");
     }
 
 }

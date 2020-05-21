@@ -88,7 +88,7 @@ public abstract class SSLEngineHandler {
         myNetData.clear();
         peerNetData.clear();
 
-        System.out.println("Doing Handshake...");
+        //System.out.println("Doing Handshake...");
 
         // Begin handshake
         SSLEngineResult.HandshakeStatus handshakeStatus = engine.getHandshakeStatus();
@@ -120,7 +120,7 @@ public abstract class SSLEngineHandler {
         }
 
 
-        System.out.println("End Handshake!");
+        //System.out.println("End Handshake!");
 
         return true;
 
@@ -136,14 +136,13 @@ public abstract class SSLEngineHandler {
      */
     protected void read(SocketChannel socketChannel, SSLEngine engine) throws Exception {
 
-        Thread.sleep(50);
-        System.out.println("Reading...");
+        //System.out.println("Reading...");
 
         peerNetData.clear();
 
         if (readIntern(socketChannel, engine) != null) {
             peerAppData.flip();
-            System.out.println("RECEIVED: " + new String(peerAppData.array()));
+            //System.out.println("RECEIVED: " + new String(peerAppData.array()));
 
         }
 
@@ -193,9 +192,9 @@ public abstract class SSLEngineHandler {
                 peerNetData = handleBufferUnderflow(peerNetData, engine);
                 break;
             case CLOSED:
-                System.out.println("Wants to close connection");
+                //System.out.println("Wants to close connection");
                 closeConnection(socketChannel, engine);
-                System.out.println("Closed connection");
+                //System.out.println("Closed connection");
 
                 return null;
             default:
@@ -213,8 +212,10 @@ public abstract class SSLEngineHandler {
         myAppData.put(message.getBytes());
         myAppData.flip();
 
-        if (writeIntern(socketChannel, engine) != null)
-            System.out.println("SENT: " + message);
+        if (writeIntern(socketChannel, engine) != null);
+            //System.out.println("SENT: " + message);
+
+        Thread.sleep(500);
     }
 
     protected void write(SocketChannel socketChannel, SSLEngine engine, byte[] message) throws Exception {
@@ -223,8 +224,8 @@ public abstract class SSLEngineHandler {
         myAppData.put(message);
         myAppData.flip();
 
-        if (writeIntern(socketChannel, engine) != null)
-            System.out.println("SENT: " + new String(message));
+        if (writeIntern(socketChannel, engine) != null);
+            //System.out.println("SENT: " + new String(message));
     }
 
     /**
@@ -259,9 +260,9 @@ public abstract class SSLEngineHandler {
             case BUFFER_UNDERFLOW:
                 throw new SSLException("Buffer underflow occurred after a wrap.");
             case CLOSED:
-                System.out.println("Wants to close connection");
+                //System.out.println("Wants to close connection");
                 closeConnection(socketChannel, engine);
-                System.out.println("Closed connection");
+                //System.out.println("Closed connection");
                 return null;
             default:
                 throw new IllegalStateException("Invalid SSL status: " + res.getStatus());

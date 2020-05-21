@@ -48,8 +48,9 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
        /*if (PeerClient.getStorage().addBackedUpFile(fileId, fileInfo))
            exec.execute(new Backup(fileId, fileData, replicationDegree));*/
 
+        System.out.println("BACKUP " + fileId + " " + PeerClient.getNode().find_successor(fileId).getId());
         for (int i=0; i< PeerClient.getNode().getFingerTable().length; i++) {
-            System.out.println(PeerClient.getNode().getFingerTable()[i].getNode().getId());
+            System.out.println("BACKUP: " + PeerClient.getNode().getFingerTable()[i].getNode().getId());
             System.out.println(PeerClient.getNode().getFingerTable()[i].getStart());
             System.out.println();
         }

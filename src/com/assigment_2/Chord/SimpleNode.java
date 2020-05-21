@@ -65,7 +65,7 @@ public class SimpleNode {
     }
 
     //ask node n to find id's predecessor
-    protected SimpleNode find_predecessor(BigInteger id) throws Exception {
+    protected SimpleNode find_predecessor() throws Exception {
 
         byte[] message = MessageFactoryChord.createMessage(3, "FIND_PREDECESSOR", id);
 
@@ -77,6 +77,8 @@ public class SimpleNode {
 
         MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
         messageFactoryChord.parseMessage(client.getPeerAppData().array());
+
+        System.out.println("MESSAGE: " + new String(client.getPeerAppData().array()));
 
         if (messageFactoryChord.messageType.equals("PREDECESSOR")) {
 
@@ -98,7 +100,9 @@ public class SimpleNode {
 
     protected void notifyIntern(SimpleNode node) throws Exception {
 
-        System.out.println("SENDING NOTIFY");
+        if(this.id.equals(node.id))
+            return;
+
         byte[] message = MessageFactoryChord.createMessage(3, "NOTIFY", node.id, node.address, node.port);
 
         SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
