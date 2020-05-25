@@ -8,16 +8,15 @@ import javax.net.ssl.*;
 
 /**
  * An SSL client for TLS Protocols.
- *
+ * <p>
  * This client connects to a server by a given address and port.
- *
+ * <p>
  * After initialization, {@link SSLEngineClient#connect()} should be called.
  * This will establish a connection with the server.
- *
+ * <p>
  * After the connection is established, it is possible to write to the server
  * through the {@link SSLEngineClient#write(String)} and read a message from
  * the server through the {@link SSLEngineClient#read()}
- *
  */
 public class SSLEngineClient extends SSLEngineHandler {
 
@@ -46,11 +45,11 @@ public class SSLEngineClient extends SSLEngineHandler {
      * Prepares the client to initiate the communication with the server.
      *
      * @param protocol The TLS protocol to be used. For Java 1.6 use up to TLSv1 protocol. For Java 1.7 or later can also use TLSv1.1 and TLSv1.2 protocols.
-     * @param address The address of the peer.
-     * @param port The peer's port that will be used.
+     * @param address  The address of the peer.
+     * @param port     The peer's port that will be used.
      * @throws Exception if an error occurs.
      */
-    public SSLEngineClient(String protocol, String address, int port) throws Exception  {
+    public SSLEngineClient(String protocol, String address, int port) throws Exception {
         this.address = address;
         this.port = port;
 
@@ -79,18 +78,23 @@ public class SSLEngineClient extends SSLEngineHandler {
         // Create a nonblocking socket channel
         this.socketChannel = SocketChannel.open();
 
-        //TODO: make sure this works
-        this.socketChannel.socket().setSoTimeout(1000);
-
-        this.socketChannel.configureBlocking(true);
+        this.socketChannel.configureBlocking(false);
         this.socketChannel.connect(new InetSocketAddress(this.address, this.port));
 
+
         //TODO: change this to a more elegant way!
-        while(!socketChannel.finishConnect());
+        while (!socketChannel.finishConnect()) ;
+
 
         // Do initial handshake
         engine.beginHandshake();
-        return handshake(socketChannel, engine);
+
+        if (!handshake(socketChannel, engine))
+            return false;
+
+
+        this.socketChannel.configureBlocking(true);
+        return true;
     }
 
     /**

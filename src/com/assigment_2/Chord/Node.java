@@ -65,7 +65,10 @@ public class Node extends SimpleNode implements Runnable {
 
         if(n_ != null){
 
+
+
             successor = n_.find_successor(this.id);
+
 
             predecessor = null;
 

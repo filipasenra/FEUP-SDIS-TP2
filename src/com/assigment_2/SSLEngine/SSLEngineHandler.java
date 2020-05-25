@@ -15,7 +15,7 @@ public abstract class SSLEngineHandler {
     /**
      * ByteBuffer that contains this peer's data (decrypted) to be sent to the other peer'
      * Before sending to the other peer' it should be encrypted by using {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
-     *
+     * <p>
      * Should be (at least) the size of the outgoing data
      */
     private ByteBuffer myAppData;
@@ -24,7 +24,7 @@ public abstract class SSLEngineHandler {
     /**
      * ByteBuffer that contains this peer's data (encrypted) to be sent to the other peer'
      * Generated after encrypting SSLEngineHandler#myNetData with {@link SSLEngine#wrap(ByteBuffer, ByteBuffer)}
-     *
+     * <p>
      * It should be initialized using {@link SSLSession#getPacketBufferSize()}
      */
     private ByteBuffer myNetData;
@@ -33,11 +33,11 @@ public abstract class SSLEngineHandler {
     /**
      * ByteBuffer that contains the other peer's data (decrypted) received from the other peer
      * Obtain after SSLEngineHandler#peerAppData is decrypted by using {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)}
-     *
+     * <p>
      * It Must be large enough to hold the application data from any peer.
      * It should be initialized using {@link SSLSession#getPacketBufferSize()}
      * If necessary, its size should be enlarge.
-     *
+     * <p>
      * Check {@link SSLEngineHandler#enlargeBuffer(ByteBuffer, int)}
      */
     private ByteBuffer peerAppData;
@@ -46,10 +46,10 @@ public abstract class SSLEngineHandler {
     /**
      * ByteBuffer that contains the other peer's data (encrypted) received from the other peer'
      * It should be initialized with size of 16KB
-     *
+     * <p>
      * If the {@link SSLEngine#unwrap(ByteBuffer, ByteBuffer)} detects large packets,
      * the buffer sizes returned by SSLSession will be used to updated the size dynamically.
-     *
+     * <p>
      * Check {@link SSLEngineHandler#enlargeBuffer(ByteBuffer, int)}}
      */
     private ByteBuffer peerNetData;
@@ -65,7 +65,7 @@ public abstract class SSLEngineHandler {
      *
      * @param sslSession -
      */
-    protected void setByteBuffers(SSLSession sslSession){
+    protected void setByteBuffers(SSLSession sslSession) {
 
         myAppData = ByteBuffer.allocate(sslSession.getApplicationBufferSize());
         myNetData = ByteBuffer.allocate(sslSession.getPacketBufferSize());
@@ -91,7 +91,6 @@ public abstract class SSLEngineHandler {
         // Begin handshake
         SSLEngineResult.HandshakeStatus handshakeStatus = engine.getHandshakeStatus();
         while (handshakeStatus != SSLEngineResult.HandshakeStatus.FINISHED && handshakeStatus != SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING) {
-
             switch (handshakeStatus) {
                 case NEED_UNWRAP:
                     if ((handshakeStatus = readIntern(socketChannel, engine)) == null)
@@ -128,8 +127,8 @@ public abstract class SSLEngineHandler {
      *
      * @param socketChannel - SocketChannel to communicate between this peer and the other peer
      * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
-     * @throws Exception if an error occurs.
      * @return
+     * @throws Exception if an error occurs.
      */
     protected SSLEngineResult.HandshakeStatus read(SocketChannel socketChannel, SSLEngine engine) throws Exception {
 
@@ -145,9 +144,8 @@ public abstract class SSLEngineHandler {
      *
      * @param socketChannel - SocketChannel to communicate between this peer and the other peer
      * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
-     *
-     * @throws Exception if an error occurs.
      * @return SSLEngineResult.HandshakeStatus returns the status of the handshake or null in case of error
+     * @throws Exception if an error occurs.
      */
     private SSLEngineResult.HandshakeStatus readIntern(SocketChannel socketChannel, SSLEngine engine) throws Exception {
 
@@ -200,6 +198,7 @@ public abstract class SSLEngineHandler {
         myAppData.put(message.getBytes());
         myAppData.flip();
 
+
         writeIntern(socketChannel, engine);
 
     }
@@ -218,8 +217,6 @@ public abstract class SSLEngineHandler {
      *
      * @param socketChannel - SocketChannel to communicate between this peer and the other peer
      * @param engine        - Engine that will encrypt and/or decrypt the date between the other peer'and this peer
-     *
-     *
      * @return SSLEngineResult.HandshakeStatus returns the status of the handshake or null in case of error
      * @throws Exception if an error occurs.
      */
@@ -389,7 +386,7 @@ public abstract class SSLEngineHandler {
                 peerAppData.clear();
                 SSLEngineResult res = engine.unwrap(peerNetData, peerAppData);
 
-                if(res.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.FINISHED || res.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING)
+                if (res.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.FINISHED || res.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING)
                     break;
             }
         }

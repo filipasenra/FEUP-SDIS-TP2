@@ -1,4 +1,7 @@
 package com.assigment_2.SSLEngine;
+
+import com.assigment_2.PeerClient;
+
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -13,12 +16,11 @@ import javax.net.ssl.*;
 
 /**
  * An SSL server for TLS Protocols.
- *
+ * <p>
  * This server will listen to a specific address and port and serve TLS connections.
- *
+ * <p>
  * After initialization, {@link SSLEngineServer#run()} should be called.
  * This will allow the server to start listening to new connection requests.
- *
  */
 public class SSLEngineServer extends SSLEngineHandler implements Runnable {
 
@@ -72,7 +74,6 @@ public class SSLEngineServer extends SSLEngineHandler implements Runnable {
 
     /**
      * Starts listening to an address and port
-     *
      */
     public void run() {
 
@@ -110,6 +111,7 @@ public class SSLEngineServer extends SSLEngineHandler implements Runnable {
                             byteBuffer.get(arr);
 
                             this.messagesHandler.run((SocketChannel) key.channel(), (SSLEngine) key.attachment(), arr);
+
                         }
 
                     } else if (key.isWritable()) {

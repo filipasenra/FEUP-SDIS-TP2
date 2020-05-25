@@ -86,7 +86,6 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
         BigInteger request_id = messageFactoryChord.getRequestId();
 
         SimpleNode node = PeerClient.getNode().find_successor(request_id);
-        System.out.println("PASOSU");
 
         byte[] message = MessageFactoryChord.createMessage(3, "SUCCESSOR", request_id, node.getAddress(), node.getPort());
         PeerClient.getObj().write(socketChannel, engine, message);

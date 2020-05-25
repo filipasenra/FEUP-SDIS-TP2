@@ -70,7 +70,10 @@ public class SimpleNode {
 
 
         SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
+
+
         client.connect();
+
         client.write(message);
         client.read();
         client.shutdown();
