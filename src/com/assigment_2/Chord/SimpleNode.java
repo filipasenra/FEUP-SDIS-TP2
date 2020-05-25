@@ -39,6 +39,30 @@ public class SimpleNode {
         }
     }
 
+    //ask node to get id's successor
+    public SimpleNode getSuccessor(BigInteger id) throws Exception {
+
+        byte[] message = MessageFactoryChord.createMessage(3, "GET_SUCCESSOR", id);
+
+
+        SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
+        client.connect();
+        client.write(message);
+        client.read();
+        client.shutdown();
+
+        MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
+        messageFactoryChord.parseMessage(client.getPeerAppData().array());
+
+        if (messageFactoryChord.messageType.equals("SUCCESSOR_")) {
+
+            return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, m);
+
+        } else {
+            throw new IllegalStateException("ERROR: Didn't received a SUCCESSOR answer to GET_SUCCESSOR");
+        }
+    }
+
     //ask node to find id's successor
     public SimpleNode find_successor(BigInteger id) throws Exception {
 
@@ -61,7 +85,6 @@ public class SimpleNode {
         } else {
             throw new IllegalStateException("ERROR: Didn't received a SUCCESSOR answer to FIND_SUCCESSOR");
         }
-
     }
 
     //ask node n to find id's predecessor

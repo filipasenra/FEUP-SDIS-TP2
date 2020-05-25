@@ -10,26 +10,23 @@ public final class MessageFactoryChord {
     public BigInteger requestId;
     public String address;
     public int port;
-    public int i_finger_table;
+    public int repDegree;
     public byte[] data;
 
     public MessageFactoryChord(){}
 
-    public BigInteger getRequestId() {
-        return requestId;
-    }
-
-    public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port, byte[] body) {
-
-        byte[] header = createMessage(version, messageType, requestId, address, port);
+    public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port, int repDegree, byte[] body) {
+        byte[] header = createMessage(version, messageType, requestId, address, port, repDegree);
         byte[] message = new byte[header.length + body.length];
 
         System.arraycopy(header,0,message,0, header.length);
         System.arraycopy(body,0,message,header.length,body.length);
 
         return message;
+    }
 
-        //return (version + " " + messageType + " " + requestId + " " + address + " " + port + " " + i + " " + data+ CRLF + CRLF).getBytes();
+    public BigInteger getRequestId() {
+        return requestId;
     }
 
     public static byte[] createMessage(double version, String messageType, BigInteger requestId){
@@ -94,7 +91,7 @@ public final class MessageFactoryChord {
                     this.port = Integer.parseInt(headerArray[j]);
                     break;
                 case 5:
-                    this.i_finger_table = Integer.parseInt(headerArray[j]);
+                    this.repDegree = Integer.parseInt(headerArray[j]);
                     break;
 
             }

@@ -46,6 +46,9 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                 case "BACKUP":
                     manageBackup();
                     break;
+                case "GET_SUCCESSOR":
+                    manageGetSuccessor();
+                    break;
                 default:
                     System.err.println("NOT A VALID PROTOCOL: " + this.messageFactoryChord.messageType);
             }
@@ -83,8 +86,20 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
         BigInteger request_id = messageFactoryChord.getRequestId();
 
         SimpleNode node = PeerClient.getNode().find_successor(request_id);
+        System.out.println("PASOSU");
 
         byte[] message = MessageFactoryChord.createMessage(3, "SUCCESSOR", request_id, node.getAddress(), node.getPort());
+        PeerClient.getObj().write(socketChannel, engine, message);
+
+    }
+
+    private void manageGetSuccessor() throws Exception {
+
+        BigInteger request_id = messageFactoryChord.getRequestId();
+
+        SimpleNode node = PeerClient.getNode().getSuccessor();
+
+        byte[] message = MessageFactoryChord.createMessage(3, "SUCCESSOR_", request_id, node.getAddress(), node.getPort());
         PeerClient.getObj().write(socketChannel, engine, message);
 
     }
