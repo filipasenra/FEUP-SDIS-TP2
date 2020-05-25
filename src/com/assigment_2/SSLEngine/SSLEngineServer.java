@@ -102,8 +102,13 @@ public class SSLEngineServer extends SSLEngineHandler implements Runnable {
                     } else if (key.isReadable()) {
                         // a channel is ready for reading
                         if (read((SocketChannel) key.channel(), (SSLEngine) key.attachment()) != null) {
-                            byte[] arr = new byte[getPeerAppData().remaining()];
-                            getPeerAppData().get(arr);
+
+                            ByteBuffer byteBuffer = getPeerAppData();
+
+                            byteBuffer.flip();
+                            byte[] arr = new byte[byteBuffer.remaining()];
+                            byteBuffer.get(arr);
+
                             this.messagesHandler.run((SocketChannel) key.channel(), (SSLEngine) key.attachment(), arr);
                         }
 

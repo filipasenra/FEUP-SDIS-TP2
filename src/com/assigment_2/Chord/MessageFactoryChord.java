@@ -54,9 +54,9 @@ public final class MessageFactoryChord {
 
     public boolean parseMessage(byte[] message) {
 
-        int i;
-        for (i = 0; i < message.length; i++) {
 
+        int i;
+        for (i = 0; i < (message.length - 3); i++) {
             if (i + 3 > message.length)
                 return false;
 
@@ -66,7 +66,9 @@ public final class MessageFactoryChord {
 
         }
 
-        this.data = Arrays.copyOfRange(message, i + 4, message.length);
+        if(i + 4 < message.length)
+            this.data = Arrays.copyOfRange(message, i + 4, message.length);
+
         byte[] header = Arrays.copyOfRange(message, 0, i);
 
         String headerString = new String(header);
@@ -94,8 +96,6 @@ public final class MessageFactoryChord {
                 case 5:
                     this.i_finger_table = Integer.parseInt(headerArray[j]);
                     break;
-                default:
-                    return false;
 
             }
 

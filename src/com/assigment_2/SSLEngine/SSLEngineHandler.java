@@ -184,7 +184,6 @@ public abstract class SSLEngineHandler {
                 break;
             case CLOSED:
                 closeConnection(socketChannel, engine);
-
                 return null;
             default:
                 throw new IllegalStateException("Invalid SSL status: " + res.getStatus());
