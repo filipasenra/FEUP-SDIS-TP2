@@ -101,8 +101,11 @@ public class SSLEngineServer extends SSLEngineHandler implements Runnable {
 
                     } else if (key.isReadable()) {
                         // a channel is ready for reading
-                        read((SocketChannel) key.channel(), (SSLEngine) key.attachment());
-                        this.messagesHandler.run((SocketChannel) key.channel(), (SSLEngine) key.attachment(), getPeerAppData().array());
+                        if (read((SocketChannel) key.channel(), (SSLEngine) key.attachment()) != null) {
+                            byte[] arr = new byte[getPeerAppData().remaining()];
+                            getPeerAppData().get(arr);
+                            this.messagesHandler.run((SocketChannel) key.channel(), (SSLEngine) key.attachment(), arr);
+                        }
 
                     } else if (key.isWritable()) {
                         // a channel is ready for writing
@@ -140,8 +143,6 @@ public class SSLEngineServer extends SSLEngineHandler implements Runnable {
      * @throws Exception if an error occurs.
      */
     private void accept(SelectionKey key) throws Exception {
-
-        System.out.println("New connection request!");
 
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
         SocketChannel socketChannel = serverSocketChannel.accept();

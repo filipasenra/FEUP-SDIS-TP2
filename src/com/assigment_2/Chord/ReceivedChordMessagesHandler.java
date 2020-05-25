@@ -2,6 +2,7 @@ package com.assigment_2.Chord;
 
 import com.assigment_2.Peer;
 import com.assigment_2.PeerClient;
+import com.assigment_2.Protocol.Backup;
 import com.assigment_2.SSLEngine.MessagesHandler;
 
 import javax.net.ssl.SSLEngine;
@@ -38,6 +39,9 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                 case "NOTIFY":
                     manageNotify();
                     break;
+                case "RECEIVED_BACKUP":
+                    System.out.println("RECEIVED A CONFIRMATION OF BACKUP!");
+                    break;
                 case "BACKUP":
                     manageBackup();
                     break;
@@ -61,11 +65,11 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
     private void manageFindPredecessor() throws Exception {
 
         BigInteger request_id = messageFactoryChord.getRequestId();
-        SimpleNode predecessor =  PeerClient.getNode().predecessor;
+        SimpleNode predecessor = PeerClient.getNode().predecessor;
 
         byte[] message;
-        if(predecessor != null)
-           message = MessageFactoryChord.createMessage(3, "PREDECESSOR", request_id, predecessor.getAddress(), predecessor.getPort());
+        if (predecessor != null)
+            message = MessageFactoryChord.createMessage(3, "PREDECESSOR", request_id, predecessor.getAddress(), predecessor.getPort());
         else
             message = MessageFactoryChord.createMessage(3, "NOTFOUND");
 
@@ -86,9 +90,15 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
     private void manageBackup() throws Exception {
 
-        if (!PeerClient.getStorage().getStoredFiles().contains(messageFactoryChord.requestId)) {
 
-            PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId);
+        PeerClient.getStorage().addToBuffer(messageFactoryChord.requestId, messageFactoryChord.data);
+
+        byte[] message = MessageFactoryChord.createMessage(3, "RECEIVED_BACKUP", PeerClient.getNode().id);
+        PeerClient.getObj().write(socketChannel, engine, message);
+
+
+        if (messageFactoryChord.data.length < Backup.backupDataSize) {
+
             String filename = PeerClient.getId() + "/" + messageFactoryChord.requestId;
 
             File file = new File(filename);
@@ -99,7 +109,10 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                     file.createNewFile();
 
                     FileOutputStream fos = new FileOutputStream(filename);
-                    fos.write(messageFactoryChord.data, 0, messageFactoryChord.data.length);
+
+                    for (byte[] data : PeerClient.getStorage().getBufferFromFile(messageFactoryChord.requestId)) {
+                        fos.write(data);
+                    }
 
                     fos.close();
                 }
@@ -107,13 +120,9 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                 e.printStackTrace();
             }
 
-            byte[] message = MessageFactoryChord.createMessage(3, "BACKUP_COMPLETE", PeerClient.getNode().id);
-            PeerClient.getObj().write(socketChannel, engine, message);
+
         }
-        else {
-            byte[] message = MessageFactoryChord.createMessage(3, "BACKUP_ALREADY_DONE", PeerClient.getNode().id);
-            PeerClient.getObj().write(socketChannel, engine, message);
-        }
+
     }
 
 }

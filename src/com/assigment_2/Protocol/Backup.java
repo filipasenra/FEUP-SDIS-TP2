@@ -3,6 +3,8 @@ package com.assigment_2.Protocol;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
+import java.util.Arrays;
+
 import com.assigment_2.Chord.SimpleNode;
 import com.assigment_2.Peer;
 import com.assigment_2.PeerClient;
@@ -13,6 +15,7 @@ public class Backup implements Runnable{
     byte[] fileData;
     BigInteger fileId;
     int replicationDegree;
+    public final static int backupDataSize = 16000;
 
     public Backup(BigInteger fileId, byte[] fileData, int replicationDegree) throws IOException {
 
@@ -25,14 +28,28 @@ public class Backup implements Runnable{
     public void run() {
         try {
             SimpleNode sn = PeerClient.getNode().find_successor(this.fileId);
-            System.out.println("SUCCESSOR of " + this.fileId + " is " + sn.getId());
-            byte[] message = MessageFactoryChord.createMessage(3, "BACKUP", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), this.fileData);
-            SSLEngineClient client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
+            //System.out.println("SUCCESSOR of " + this.fileId + " is " + sn.getId());
 
-            client.connect();
-            client.write(message);
-            client.read();
-            client.shutdown();
+            int i;
+
+            for(i = 0; i < this.fileData.length; i += backupDataSize) {
+
+                byte[] message;
+
+                if(i + backupDataSize <= this.fileData.length) {
+                    message = MessageFactoryChord.createMessage(3, "BACKUP", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), Arrays.copyOfRange(this.fileData, i, i + backupDataSize));
+                } else {
+                    message = MessageFactoryChord.createMessage(3, "BACKUP", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), Arrays.copyOfRange(this.fileData, i, this.fileData.length));
+                }
+
+                SSLEngineClient client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
+
+                client.connect();
+                client.write(message);
+                client.read();
+                client.shutdown();
+            }
+
 
         } catch (Exception e) {
             e.printStackTrace();

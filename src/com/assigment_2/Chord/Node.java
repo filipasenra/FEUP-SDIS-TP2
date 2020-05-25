@@ -66,8 +66,6 @@ public class Node extends SimpleNode implements Runnable {
 
         }
 
-        System.out.println("END JOIN");
-
     }
 
     private BigInteger calculate_start(int k){
@@ -164,7 +162,7 @@ public class Node extends SimpleNode implements Runnable {
 
             this.fix_fingers();
             this.stabilize();
-            this.printInfo();
+           // this.printInfo();
         } catch (Exception e) {
             e.printStackTrace();
         }

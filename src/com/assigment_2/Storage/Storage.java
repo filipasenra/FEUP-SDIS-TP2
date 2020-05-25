@@ -13,6 +13,8 @@ public class Storage implements Serializable {
     private final ConcurrentHashMap<BigInteger, ArrayList<BigInteger>> storedFilesCounter = new ConcurrentHashMap<BigInteger, ArrayList<BigInteger>>();
     private final ArrayList<BigInteger> storedFiles = new ArrayList<>();
 
+    private final ConcurrentHashMap<BigInteger, ArrayList<byte[]>> bufferFiles = new ConcurrentHashMap<>();
+
     public Storage() {
         this.overallSpace = -1;
         this.occupiedSpace = 0;
@@ -62,6 +64,20 @@ public class Storage implements Serializable {
         }
 
         return false;
+    }
+
+    public void addToBuffer(BigInteger fileId, byte[] data) {
+
+        if(!this.bufferFiles.containsKey(fileId)) {
+            this.bufferFiles.put(fileId, new ArrayList<>());
+        }
+
+        this.bufferFiles.get(fileId).add(data);
+
+    }
+
+    public ArrayList<byte[]> getBufferFromFile(BigInteger fileId) {
+        return this.bufferFiles.get(fileId);
     }
 
     /*public void setOverallSpace(int overallSpace) {

@@ -43,9 +43,7 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
         FileInfo fileInfo = new FileInfo(filepath, fileId, replicationDegree);
         byte[] fileData = Files.readAllBytes(file.toPath());
 
-        System.out.println(fileId);
-
-       if (PeerClient.getStorage().addBackedUpFile(fileId, fileInfo))
+       //if (PeerClient.getStorage().addBackedUpFile(fileId, fileInfo))
            exec.execute(new Backup(fileId, fileData, replicationDegree));
 
     }
