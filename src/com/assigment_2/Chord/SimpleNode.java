@@ -101,8 +101,6 @@ public class SimpleNode {
         MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
         messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-        System.out.println("MESSAGE: " + new String(client.getPeerAppData().array()));
-
         if (messageFactoryChord.messageType.equals("PREDECESSOR")) {
 
             return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, m);
