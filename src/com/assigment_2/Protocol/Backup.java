@@ -15,26 +15,45 @@ public class Backup implements Runnable {
     byte[] fileData;
     BigInteger fileId;
     int replicationDegree;
-    int perceivedrepDegree;
+    int perceivedRepDegree;
     public final static int backupDataSize = 16000;
     SimpleNode sn;
     BigInteger successorId;
+    BigInteger firstPeer;
 
     public Backup(BigInteger fileId, byte[] fileData, int replicationDegree) throws Exception {
-        this.perceivedrepDegree = 0;
+        this.perceivedRepDegree = 0;
         this.fileData = fileData;
         this.fileId = fileId;
         this.successorId = fileId;
         this.replicationDegree = replicationDegree;
-        this.sn = PeerClient.getNode().find_successor(this.fileId);
+        this.sn = PeerClient.getNode().find_successor(fileId);
     }
 
     @Override
     public void run() {
         try {
 
-            while (this.perceivedrepDegree < this.replicationDegree) {
+            if (PeerClient.getNode().getId().equals(PeerClient.getNode().getSuccessor().getId())) {
+                System.out.println("There aren't any peers available for backup!");
+                return;
+            }
+
+            while (this.perceivedRepDegree < this.replicationDegree) {
                 this.sn = this.sn.getSuccessor(this.successorId);
+
+                //CONFIRMA SE É O PRÓPRIO
+                if (this.sn.getId().equals(PeerClient.getNode().getId()))
+                    this.sn = PeerClient.getNode().getSuccessor();
+
+                //CONFIRMA SE É O PRIMEIRO
+                if (firstPeer != null && firstPeer.equals(this.sn.getId())) {
+                    System.out.println("Replication degree not achieved!");
+                    break;
+                }
+                else if (firstPeer == null)
+                    firstPeer = this.sn.getId();
+
                 System.out.println("SUCCESSOR de " + this.successorId + " is " + sn.getId());
 
                 PeerClient.getNode().printInfo();
@@ -62,10 +81,10 @@ public class Backup implements Runnable {
                     messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
                     if (messageFactoryChord.messageType.equals("RECEIVED_BACKUP")) {
-                        this.perceivedrepDegree++;
+                        this.perceivedRepDegree++;
                     }
 
-                    if (this.perceivedrepDegree < this.replicationDegree) {
+                    if (this.perceivedRepDegree < this.replicationDegree) {
                        this.successorId = this.sn.getId();
                     }
 
