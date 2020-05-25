@@ -78,6 +78,10 @@ public class SSLEngineClient extends SSLEngineHandler {
 
         // Create a nonblocking socket channel
         this.socketChannel = SocketChannel.open();
+
+        //TODO: make sure this works
+        this.socketChannel.socket().setSoTimeout(1000);
+
         this.socketChannel.configureBlocking(true);
         this.socketChannel.connect(new InetSocketAddress(this.address, this.port));
 
