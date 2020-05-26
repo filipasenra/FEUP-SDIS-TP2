@@ -122,15 +122,10 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
     private void manageBackup() throws Exception {
 
-        PeerClient.getStorage().addToBuffer(messageFactoryChord.requestId, messageFactoryChord.data);
+        PeerClient.getStorage().addToBuffer(messageFactoryChord.requestId, messageFactoryChord.data, messageFactoryChord.chunkNo);
 
-        byte[] message = MessageFactoryChord.createMessage(3, "RECEIVED_BACKUP", PeerClient.getNode().id);
-        PeerClient.getObj().write(socketChannel, engine, message);
-
-
+        //Quando recebeu o ultimo pedaço de informação
         if (messageFactoryChord.data.length < Backup.backupDataSize) {
-
-            PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId);
 
             String filename = PeerClient.getId() + "/" + messageFactoryChord.requestId;
 
@@ -146,17 +141,36 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                 FileOutputStream fos = new FileOutputStream(filename);
 
                 for (byte[] data : PeerClient.getStorage().getBufferFromFile(messageFactoryChord.requestId)) {
+                    if (data == null) {
+
+                        byte[] message = MessageFactoryChord.createMessage(3, "BACKUP_FAILED", PeerClient.getNode().id);
+                        PeerClient.getObj().write(socketChannel, engine, message);
+
+                        fos.close();
+                        file.delete();
+
+                        PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
+
+                        System.err.println("An error occurred while receiving file data and some data is missing.");
+                        return;
+                    }
                     fos.write(data);
                 }
 
                 fos.close();
 
+                PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId);
                 PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
+
+
+        byte[] message = MessageFactoryChord.createMessage(3, "BACKUP_COMPLETE", PeerClient.getNode().id);
+        PeerClient.getObj().write(socketChannel, engine, message);
 
 
     }

@@ -1,5 +1,6 @@
 package com.assigment_2.Protocol;
 
+import java.awt.desktop.SystemSleepEvent;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.Arrays;
@@ -7,8 +8,10 @@ import com.assigment_2.Chord.SimpleNode;
 import com.assigment_2.PeerClient;
 import com.assigment_2.SSLEngine.SSLEngineClient;
 import com.assigment_2.Chord.MessageFactoryChord;
+import com.assigment_2.Storage.FileInfo;
 
 public class Backup implements Runnable {
+    String filepath;
     byte[] fileData;
     BigInteger fileId;
     int replicationDegree;
@@ -18,11 +21,13 @@ public class Backup implements Runnable {
     BigInteger successorId;
     BigInteger firstPeer;
 
-    public Backup(BigInteger fileId, byte[] fileData, int replicationDegree) throws Exception {
+
+    public Backup(BigInteger fileId, byte[] fileData, String filepath, int replicationDegree) throws Exception {
         this.perceivedRepDegree = 0;
         this.fileData = fileData;
         this.fileId = fileId;
         this.successorId = fileId;
+        this.filepath = filepath;
         this.replicationDegree = replicationDegree;
         this.sn = PeerClient.getNode().find_successor(fileId);
     }
@@ -55,17 +60,20 @@ public class Backup implements Runnable {
 
                 PeerClient.getNode().printInfo();
 
-                int i;
 
-                for (i = 0; i < this.fileData.length; i += backupDataSize) {
+                int chunkNo = 0;
+                boolean successful = true;
+
+                for (int i = 0; i < this.fileData.length; i += backupDataSize, chunkNo++) {
 
                     byte[] message;
 
                     if (i + backupDataSize <= this.fileData.length) {
-                        message = MessageFactoryChord.createMessage(3, "BACKUP", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), this.replicationDegree, Arrays.copyOfRange(this.fileData, i, i + backupDataSize));
+                        message = MessageFactoryChord.createMessage(3, "BACKUP", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), this.replicationDegree, chunkNo, Arrays.copyOfRange(this.fileData, i, i + backupDataSize));
                     } else {
-                        message = MessageFactoryChord.createMessage(3, "BACKUP", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), this.replicationDegree, Arrays.copyOfRange(this.fileData, i, this.fileData.length));
+                        message = MessageFactoryChord.createMessage(3, "BACKUP", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), this.replicationDegree, chunkNo, Arrays.copyOfRange(this.fileData, i, this.fileData.length));
                     }
+
 
                     SSLEngineClient client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
 
@@ -77,20 +85,27 @@ public class Backup implements Runnable {
                     MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
                     messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-                    if (messageFactoryChord.messageType.equals("RECEIVED_BACKUP")) {
-                        this.perceivedRepDegree++;
+                    if (!messageFactoryChord.messageType.equals("BACKUP_COMPLETE")) {
+                       successful = false;
+                       break;
                     }
+                }
 
-                    if (this.perceivedRepDegree < this.replicationDegree) {
-                       this.successorId = this.sn.getId();
-                    }
+                if (successful) {
+                    this.perceivedRepDegree++;
+                }
 
+                if (this.perceivedRepDegree < this.replicationDegree) {
+                    this.successorId = this.sn.getId();
                 }
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        if (this.perceivedRepDegree > 0 )
+         PeerClient.getStorage().addBackedUpFile(fileId, new FileInfo(filepath, fileId, replicationDegree));
 
     }
 

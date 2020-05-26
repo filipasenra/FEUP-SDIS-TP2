@@ -41,11 +41,10 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
 
         File file = new File(filepath);
         BigInteger fileId = Backup.generateFileId(file.getName(), file.lastModified(), file.getParent());
-        FileInfo fileInfo = new FileInfo(filepath, fileId, replicationDegree);
         byte[] fileData = Files.readAllBytes(file.toPath());
 
-        if (PeerClient.getStorage().addBackedUpFile(fileId, fileInfo))
-           exec.execute(new Backup(fileId, fileData, replicationDegree));
+        if (!PeerClient.getStorage().getBackedUpFiles().containsKey(fileId))
+           exec.execute(new Backup(fileId, fileData, filepath, replicationDegree));
         else
            System.out.println("File already backed up!");
     }
@@ -57,7 +56,11 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
 
         FileInfo fileInfo = PeerClient.getStorage().getFileInfo(file_path);
 
-        exec.execute(new Delete(fileInfo.id, fileInfo.replication_degree));
+        if (fileInfo != null)
+            exec.execute(new Delete(fileInfo.id, fileInfo.replication_degree));
+        else
+            System.out.println("File is not backed up!");
+
     }
 
     public void restore(String file_path) {

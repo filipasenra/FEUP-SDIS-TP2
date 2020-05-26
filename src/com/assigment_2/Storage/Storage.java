@@ -23,40 +23,36 @@ public class Storage implements Serializable {
         return backedUpFiles;
     }
 
-    public boolean addBackedUpFile(BigInteger fileId, FileInfo fileInfo){
-        if(!this.backedUpFiles.containsKey(fileId)) {
+    public boolean addBackedUpFile(BigInteger fileId, FileInfo fileInfo) {
+        if (!this.backedUpFiles.containsKey(fileId)) {
             this.backedUpFiles.put(fileId, fileInfo);
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
 
     public boolean removeBufferedFile(BigInteger fileId) {
-        if(this.bufferFiles.containsKey(fileId)) {
+        if (this.bufferFiles.containsKey(fileId)) {
             this.bufferFiles.remove(fileId);
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
 
-    public boolean removeBackedUpFile(BigInteger fileId){
-        if(this.backedUpFiles.containsKey(fileId)) {
+    public boolean removeBackedUpFile(BigInteger fileId) {
+        if (this.backedUpFiles.containsKey(fileId)) {
             this.backedUpFiles.remove(fileId);
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
 
     public FileInfo getFileInfo(String filepath) {
         Set<BigInteger> keys = backedUpFiles.keySet();
-        for (BigInteger key : keys)
-        {
+        for (BigInteger key : keys) {
             FileInfo curr = backedUpFiles.get(key);
 
             if (curr.pathname.equals(filepath))
@@ -70,8 +66,8 @@ public class Storage implements Serializable {
         return storedFiles;
     }
 
-    public boolean addStoredFile(BigInteger fileId){
-        if(!this.storedFiles.contains(fileId)) {
+    public boolean addStoredFile(BigInteger fileId) {
+        if (!this.storedFiles.contains(fileId)) {
             this.storedFiles.add(fileId);
             return true;
         }
@@ -79,14 +75,23 @@ public class Storage implements Serializable {
         return false;
     }
 
-    public void addToBuffer(BigInteger fileId, byte[] data) {
+    public void addToBuffer(BigInteger fileId, byte[] data, int chunkNo) {
 
-        if(!this.bufferFiles.containsKey(fileId)) {
+        if (!this.bufferFiles.containsKey(fileId)) {
             this.bufferFiles.put(fileId, new ArrayList<>());
         }
 
-        this.bufferFiles.get(fileId).add(data);
+        if (chunkNo + 1 == this.bufferFiles.get(fileId).size())
+            this.bufferFiles.get(fileId).add(data);
+        else if (chunkNo < this.bufferFiles.get(fileId).size())
+            this.bufferFiles.get(fileId).set(chunkNo, data);
+        else {
+            for (int i = this.bufferFiles.get(fileId).size(); i < chunkNo; i++) {
+                this.bufferFiles.get(fileId).add(null);
+            }
 
+            this.bufferFiles.get(fileId).add(data);
+        }
     }
 
     public ArrayList<byte[]> getBufferFromFile(BigInteger fileId) {

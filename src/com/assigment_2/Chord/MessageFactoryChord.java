@@ -11,12 +11,13 @@ public final class MessageFactoryChord {
     public String address;
     public int port;
     public int repDegree;
+    public int chunkNo;
     public byte[] data;
 
     public MessageFactoryChord(){}
 
-    public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port, int repDegree, byte[] body) {
-        byte[] header = createMessage(version, messageType, requestId, address, port, repDegree);
+    public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port, int repDegree, int chunkNo, byte[] body) {
+        byte[] header = createMessage(version, messageType, requestId, address, port, repDegree, chunkNo);
         byte[] message = new byte[header.length + body.length];
 
         System.arraycopy(header,0,message,0, header.length);
@@ -34,9 +35,9 @@ public final class MessageFactoryChord {
         return (version + " " + messageType + " " + requestId + CRLF + CRLF).getBytes();
     }
 
-    public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port, int i) {
+    public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port, int repDegree, int chunkNo) {
 
-        return (version + " " + messageType + " " + requestId + " " + address + " " + port + " " + i + CRLF + CRLF).getBytes();
+        return (version + " " + messageType + " " + requestId + " " + address + " " + port + " " + repDegree + " " + chunkNo + CRLF + CRLF).getBytes();
     }
 
     public static byte[] createMessage(double version, String messageType, BigInteger requestId, String address, int port) {
@@ -92,6 +93,9 @@ public final class MessageFactoryChord {
                     break;
                 case 5:
                     this.repDegree = Integer.parseInt(headerArray[j]);
+                    break;
+                case 6:
+                    this.chunkNo = Integer.parseInt(headerArray[j]);
                     break;
 
             }
