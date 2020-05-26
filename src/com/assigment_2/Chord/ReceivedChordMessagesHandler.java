@@ -114,8 +114,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
             byte[] message = MessageFactoryChord.createMessage(3, "DELETED", messageFactoryChord.requestId, messageFactoryChord.address, messageFactoryChord.port);
             PeerClient.getObj().write(socketChannel, engine, message);
-        }
-        else {
+        } else {
             byte[] message = MessageFactoryChord.createMessage(3, "NOT_DELETED", messageFactoryChord.requestId, messageFactoryChord.address, messageFactoryChord.port);
             PeerClient.getObj().write(socketChannel, engine, message);
         }
@@ -137,21 +136,23 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
             File file = new File(filename);
             try {
-
-                if (!file.exists()) {
-                    file.getParentFile().mkdirs();
-                    file.createNewFile();
-
-                    FileOutputStream fos = new FileOutputStream(filename);
-
-                    for (byte[] data : PeerClient.getStorage().getBufferFromFile(messageFactoryChord.requestId)) {
-                        fos.write(data);
-                    }
-
-                    fos.close();
-
-                    PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
+                if (file.exists()) {
+                    file.delete();
                 }
+
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+
+                FileOutputStream fos = new FileOutputStream(filename);
+
+                for (byte[] data : PeerClient.getStorage().getBufferFromFile(messageFactoryChord.requestId)) {
+                    fos.write(data);
+                }
+
+                fos.close();
+
+                PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
