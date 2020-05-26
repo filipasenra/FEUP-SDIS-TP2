@@ -56,6 +56,7 @@ public class Storage implements Serializable {
 
     public FileInfo getFileInfo(String filepath) {
         Set<BigInteger> keys = backedUpFiles.keySet();
+
         for (BigInteger key : keys) {
             FileInfo curr = backedUpFiles.get(key);
 

@@ -2,34 +2,32 @@ package com.assigment_2.Protocol;
 
 import com.assigment_2.Chord.MessageFactoryChord;
 import com.assigment_2.Chord.SimpleNode;
+import com.assigment_2.Peer;
 import com.assigment_2.PeerClient;
 import com.assigment_2.SSLEngine.SSLEngineClient;
 
-import java.awt.desktop.SystemSleepEvent;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.util.Arrays;
 
-public class Delete implements Runnable {
+public class Restore implements Runnable {
     BigInteger fileId;
-    int replicationDegree;
-    int deletedCounter;
-    SimpleNode sn;
     BigInteger successorId;
+    SimpleNode sn;
     BigInteger firstPeer;
 
-    public Delete(BigInteger fileId, int replicationDegree) throws Exception {
-        this.deletedCounter = 0;
+    public Restore(BigInteger fileId) throws Exception {
         this.fileId = fileId;
         this.successorId = fileId;
-        this.replicationDegree = replicationDegree;
         this.sn = PeerClient.getNode().find_successor(fileId);
     }
 
     @Override
     public void run() {
+
         try {
-            while (this.deletedCounter < this.replicationDegree) {
+            while (true) {
                 PeerClient.getStorage().removeBackedUpFile(this.fileId);
 
                 this.sn = this.sn.getSuccessor(this.successorId);
@@ -40,7 +38,7 @@ public class Delete implements Runnable {
 
                 //CONFIRMA SE É O PRIMEIRO
                 if (firstPeer != null && firstPeer.equals(this.sn.getId())) {
-                    System.out.println("Not all stored copies were deleted!");
+                    System.out.println("Impossible to recover file because no peer was available!");
                     break;
                 } else if (firstPeer == null)
                     firstPeer = this.sn.getId();
@@ -48,11 +46,7 @@ public class Delete implements Runnable {
                 System.out.println("SUCCESSOR de " + this.successorId + " is " + sn.getId());
 
                 byte[] message;
-
-
-                message = MessageFactoryChord.createMessage(3, "DELETE", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort());
-
-
+                message = MessageFactoryChord.createMessage(3, "RESTORE", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort());
                 SSLEngineClient client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
 
                 client.connect();
@@ -63,18 +57,17 @@ public class Delete implements Runnable {
                 MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
                 messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-                if (messageFactoryChord.messageType.equals("DELETED")) {
-                    this.deletedCounter++;
+                if (messageFactoryChord.messageType.equals("SENDING_FILE")) {
+                    System.out.println("Waiting for peer to send the file...");
+                    break;
                 }
 
-                if (this.deletedCounter < this.replicationDegree) {
-                    this.successorId = this.sn.getId();
-                }
-
+                this.successorId = this.sn.getId();
             }
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
 
+    }
 }

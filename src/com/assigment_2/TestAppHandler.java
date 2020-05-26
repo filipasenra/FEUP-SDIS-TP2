@@ -64,7 +64,7 @@ public class TestAppHandler {
 
         try {
             peer.restore(arguments[0]);
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import com.assigment_2.Protocol.Backup;
 import com.assigment_2.Protocol.Delete;
+import com.assigment_2.Protocol.Restore;
 import com.assigment_2.Storage.FileInfo;
 import com.assigment_2.SSLEngine.SSLEngineServer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -63,13 +64,18 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
 
     }
 
-    public void restore(String file_path) {
+    public void restore(String file_path) throws Exception {
         System.out.println("\nRESTORE SERVICE");
         System.out.println(" > File path: " + file_path);
         System.out.println();
 
-        //TODO: change this
-        //exec.execute(new Thread(() -> MC.restoreFile(this.version, this.id, file_path)));
+        FileInfo fileInfo = PeerClient.getStorage().getFileInfo(file_path);
+
+        if (fileInfo != null) {
+            exec.execute(new Restore(fileInfo.id));
+        }
+        else
+            System.out.println("File is not backed up!");
     }
 
     public void reclaim(String disk_space) {
