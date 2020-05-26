@@ -39,7 +39,7 @@ public class TestAppHandler {
         return true;
     }
 
-    public boolean doDeletion(String[] arguments) {
+    public boolean doDeletion(String[] arguments) throws Exception {
         if(arguments.length != 1) {
             System.err.println("Wrong no. of arguments");
             System.err.println("Usage: <rmi_peer_ap> DELETE <file_path>");

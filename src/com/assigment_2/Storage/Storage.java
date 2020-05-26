@@ -3,6 +3,7 @@ package com.assigment_2.Storage;
 import java.util.ArrayList;
 import java.math.BigInteger;
 import java.io.Serializable;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Storage implements Serializable {
@@ -10,9 +11,7 @@ public class Storage implements Serializable {
     private int occupiedSpace;
 
     private final ConcurrentHashMap<BigInteger, FileInfo> backedUpFiles = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<BigInteger, ArrayList<BigInteger>> storedFilesCounter = new ConcurrentHashMap<BigInteger, ArrayList<BigInteger>>();
     private final ArrayList<BigInteger> storedFiles = new ArrayList<>();
-
     private final ConcurrentHashMap<BigInteger, ArrayList<byte[]>> bufferFiles = new ConcurrentHashMap<>();
 
     public Storage() {
@@ -30,27 +29,41 @@ public class Storage implements Serializable {
             return true;
         }
         else {
-            System.out.println("File already backed up!");
             return false;
         }
     }
 
-    public ConcurrentHashMap<BigInteger, ArrayList<BigInteger>> getStoredFilesCounter() {
-        return storedFilesCounter;
-    }
-
-    public void incStoredFilesCounter(BigInteger fileId, BigInteger peerId) {
-        if(!this.storedFilesCounter.containsKey(fileId)) {
-            ArrayList<BigInteger> firstEntry = new ArrayList<>();
-            firstEntry.add(peerId);
-            this.storedFilesCounter.put(fileId, firstEntry);
+    public boolean removeBufferedFile(BigInteger fileId) {
+        if(this.bufferFiles.containsKey(fileId)) {
+            this.bufferFiles.remove(fileId);
+            return true;
         }
         else {
-            ArrayList<BigInteger> prevEntries = storedFilesCounter.get(fileId);
-            prevEntries.add(peerId);
-            this.storedFilesCounter.put(fileId, prevEntries);
+            return false;
+        }
+    }
+
+    public boolean removeBackedUpFile(BigInteger fileId){
+        if(this.backedUpFiles.containsKey(fileId)) {
+            this.backedUpFiles.remove(fileId);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public FileInfo getFileInfo(String filepath) {
+        Set<BigInteger> keys = backedUpFiles.keySet();
+        for (BigInteger key : keys)
+        {
+            FileInfo curr = backedUpFiles.get(key);
+
+            if (curr.pathname.equals(filepath))
+                return curr;
         }
 
+        return null;
     }
 
     public ArrayList<BigInteger> getStoredFiles() {

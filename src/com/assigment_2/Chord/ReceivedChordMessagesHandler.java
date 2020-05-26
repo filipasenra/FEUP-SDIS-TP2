@@ -6,11 +6,13 @@ import com.assigment_2.Protocol.Backup;
 import com.assigment_2.SSLEngine.MessagesHandler;
 
 import javax.net.ssl.SSLEngine;
+import java.awt.desktop.SystemSleepEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 
 public class ReceivedChordMessagesHandler implements MessagesHandler {
     MessageFactoryChord messageFactoryChord;
@@ -45,6 +47,9 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                     break;
                 case "BACKUP":
                     manageBackup();
+                    break;
+                case "DELETE":
+                    manageDelete();
                     break;
                 case "GET_SUCCESSOR":
                     manageGetSuccessor();
@@ -93,18 +98,30 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
     }
 
     private void manageGetSuccessor() throws Exception {
-
         BigInteger request_id = messageFactoryChord.getRequestId();
 
         SimpleNode node = PeerClient.getNode().getSuccessor();
 
         byte[] message = MessageFactoryChord.createMessage(3, "SUCCESSOR_", request_id, node.getAddress(), node.getPort());
         PeerClient.getObj().write(socketChannel, engine, message);
+    }
 
+    private void manageDelete() throws Exception {
+
+        if (PeerClient.getStorage().getStoredFiles().remove(messageFactoryChord.requestId)) {
+            File file = new File(PeerClient.getId() + "/" + messageFactoryChord.requestId);
+            file.delete();
+
+            byte[] message = MessageFactoryChord.createMessage(3, "DELETED", messageFactoryChord.requestId, messageFactoryChord.address, messageFactoryChord.port);
+            PeerClient.getObj().write(socketChannel, engine, message);
+        }
+        else {
+            byte[] message = MessageFactoryChord.createMessage(3, "NOT_DELETED", messageFactoryChord.requestId, messageFactoryChord.address, messageFactoryChord.port);
+            PeerClient.getObj().write(socketChannel, engine, message);
+        }
     }
 
     private void manageBackup() throws Exception {
-
 
         PeerClient.getStorage().addToBuffer(messageFactoryChord.requestId, messageFactoryChord.data);
 
@@ -113,6 +130,8 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
 
         if (messageFactoryChord.data.length < Backup.backupDataSize) {
+
+            PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId);
 
             String filename = PeerClient.getId() + "/" + messageFactoryChord.requestId;
 
@@ -130,13 +149,14 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                     }
 
                     fos.close();
+
+                    PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-
         }
+
 
     }
 

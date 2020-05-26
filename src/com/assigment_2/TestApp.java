@@ -7,14 +7,14 @@ import java.util.Arrays;
  * */
 public class TestApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         if(!parseArgs(args))
             System.exit(-1);
 
     }
 
-    private static boolean parseArgs(String[] args) {
+    private static boolean parseArgs(String[] args) throws Exception {
 
         if(args.length < 2)
         {

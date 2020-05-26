@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import com.assigment_2.Protocol.Backup;
+import com.assigment_2.Protocol.Delete;
 import com.assigment_2.Storage.FileInfo;
 import com.assigment_2.SSLEngine.SSLEngineServer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -43,18 +44,20 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
         FileInfo fileInfo = new FileInfo(filepath, fileId, replicationDegree);
         byte[] fileData = Files.readAllBytes(file.toPath());
 
-       //if (PeerClient.getStorage().addBackedUpFile(fileId, fileInfo))
+        if (PeerClient.getStorage().addBackedUpFile(fileId, fileInfo))
            exec.execute(new Backup(fileId, fileData, replicationDegree));
-
+        else
+           System.out.println("File already backed up!");
     }
 
-    public void deletion(String file_path) {
+    public void deletion(String file_path) throws Exception {
         System.out.println("\nDELETION SERVICE");
         System.out.println(" > File path: " + file_path);
         System.out.println();
 
-        //TODO: change this
-        //exec.execute(new Thread(() -> MC.deleteFile(this.version, this.id, file_path)));
+        FileInfo fileInfo = PeerClient.getStorage().getFileInfo(file_path);
+
+        exec.execute(new Delete(fileInfo.id, fileInfo.replication_degree));
     }
 
     public void restore(String file_path) {

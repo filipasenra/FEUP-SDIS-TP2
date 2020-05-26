@@ -1,12 +1,9 @@
 package com.assigment_2.Protocol;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.Arrays;
-
 import com.assigment_2.Chord.SimpleNode;
-import com.assigment_2.Peer;
 import com.assigment_2.PeerClient;
 import com.assigment_2.SSLEngine.SSLEngineClient;
 import com.assigment_2.Chord.MessageFactoryChord;
@@ -90,7 +87,6 @@ public class Backup implements Runnable {
 
                 }
             }
-
 
         } catch (Exception e) {
             e.printStackTrace();
