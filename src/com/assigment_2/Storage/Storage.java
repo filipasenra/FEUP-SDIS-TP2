@@ -1,10 +1,14 @@
 package com.assigment_2.Storage;
 
+import com.assigment_2.PeerClient;
+
+import java.awt.desktop.SystemSleepEvent;
 import java.util.ArrayList;
 import java.math.BigInteger;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class Storage implements Serializable {
     private int overallSpace;
@@ -79,6 +83,11 @@ public class Storage implements Serializable {
 
         if (!this.bufferFiles.containsKey(fileId)) {
             this.bufferFiles.put(fileId, new ArrayList<>());
+
+            //Remover o buffer com os pedaços de informação se ao fim de um tempo nao tiver feito backup
+            PeerClient.getExec().schedule(() -> {
+                removeBufferedFile(fileId);
+            }, 60, TimeUnit.SECONDS);
         }
 
         if (chunkNo + 1 == this.bufferFiles.get(fileId).size())

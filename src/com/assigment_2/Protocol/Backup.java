@@ -89,6 +89,8 @@ public class Backup implements Runnable {
                        successful = false;
                        break;
                     }
+
+                    Thread.sleep(120000);
                 }
 
                 if (successful) {
