@@ -28,6 +28,7 @@ public class SendFile implements Runnable {
     @Override
     public void run() {
         try {
+            boolean successful = true;
             int chunkNo = 0;
 
             for (int i = 0; i < this.fileData.length; i += backupDataSize, chunkNo++) {
@@ -50,8 +51,11 @@ public class SendFile implements Runnable {
 
                 MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
                 messageFactoryChord.parseMessage(client.getPeerAppData().array());
-            }
 
+                if (!messageFactoryChord.messageType.equals("RESTORE_COMPLETE")) {
+                    break;
+                }
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

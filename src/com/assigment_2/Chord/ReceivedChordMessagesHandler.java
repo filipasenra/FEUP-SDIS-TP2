@@ -248,7 +248,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
 
 
-        byte[] message = MessageFactoryChord.createMessage(3, "BACKUP_COMPLETE", PeerClient.getNode().id);
+        byte[] message = MessageFactoryChord.createMessage(3, "RESTORE_COMPLETE", PeerClient.getNode().id);
         PeerClient.getObj().write(socketChannel, engine, message);
     }
 
