@@ -65,7 +65,6 @@ public class Delete implements Runnable {
                 messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
                 if (messageFactoryChord.messageType.equals("DELETED")) {
-                    System.out.println("APAGOU A FILE: " + messageFactoryChord.requestId);
                     this.deletedCounter++;
                 }
 
@@ -74,8 +73,6 @@ public class Delete implements Runnable {
                 }
 
             }
-
-            System.out.println("TERMINOU O DELETE");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
