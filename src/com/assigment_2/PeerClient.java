@@ -82,13 +82,27 @@ public class PeerClient {
             System.exit(-1);
         }
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                var rmiReg = LocateRegistry.getRegistry();
+                rmiReg.unbind(id);
+                if (obj.isActive()) {
+                    obj.shutdown();
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                System.exit(-1);
+            }
+        }));
+
+        System.out.println("Peer " + getId() + " ready");
+
 
         //getStorageFromFile();
 
         //Saves storage before shutdown
         //Runtime.getRuntime().addShutdownHook(new Thread(PeerClient::saveStorageIntoFile));
-
-        System.out.println("Peer " + getId() + " ready");
 
         return true;
     }
