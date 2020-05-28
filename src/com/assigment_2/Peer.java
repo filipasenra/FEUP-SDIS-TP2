@@ -83,7 +83,9 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
         System.out.println(" > Disk space: " + disk_space);
         System.out.println();
 
-        //PeerClient.getStorage().setOverallSpace(Integer.parseInt(disk_space));
+        PeerClient.getStorage().setOverallSpace(Integer.parseInt(disk_space), exec);
+
+
     }
 
     public String state() {

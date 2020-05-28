@@ -1,13 +1,20 @@
 package com.assigment_2.Storage;
 
+import com.assigment_2.Chord.MessageFactoryChord;
+import com.assigment_2.Chunk.Chunk;
+import com.assigment_2.Pair;
 import com.assigment_2.PeerClient;
+import com.assigment_2.Protocol.Backup;
 
 import java.awt.desktop.SystemSleepEvent;
+import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.math.BigInteger;
-import java.io.Serializable;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class Storage implements Serializable {
@@ -21,6 +28,18 @@ public class Storage implements Serializable {
     public Storage() {
         this.overallSpace = -1;
         this.occupiedSpace = 0;
+    }
+
+    public void setOccupiedSpace(int occupiedSpace) {
+        this.occupiedSpace = occupiedSpace;
+    }
+
+    public int getOccupiedSpace() {
+        return this.occupiedSpace;
+    }
+
+    public int getOverallSpace() {
+        return this.overallSpace;
     }
 
     public ConcurrentHashMap<BigInteger, FileInfo> getBackedUpFiles() {
@@ -108,42 +127,48 @@ public class Storage implements Serializable {
         return this.bufferFiles.get(fileId);
     }
 
-    /*public void setOverallSpace(int overallSpace) {
-        this.overallSpace = overallSpace * 1000;
 
-        while(this.overallSpace < occupiedSpace ) {
+    public void setOverallSpace(int targetSpace, ScheduledThreadPoolExecutor exec) {
 
-            if(this.storedChunks.size() == 0)
-            {
-                System.err.println("Eliminated all chunks and still over capacity!\n");
-            }
+        try {
+            targetSpace = targetSpace * 1000; //to kB
+            System.out.println("Overall space before new setting: " + overallSpace);
+            System.out.println("Occupied space before new setting: " + occupiedSpace);
+            System.out.println("Target new overall space: " + targetSpace);
 
-            Map.Entry<Pair<String, Integer>, Chunk> entry = this.storedChunks.entrySet().iterator().next();
-            Chunk chunkToEliminate = entry.getValue();
+            this.overallSpace = targetSpace;
 
-            try {
 
-                int dataSize = chunkToEliminate.getData().length;
+            while (targetSpace < occupiedSpace) {
 
-                if (chunkToEliminate.deleteData()) {
-                    this.storedChunks.remove(entry.getKey(), entry.getValue());
-                    this.occupiedSpace -= dataSize;
-
-                    System.out.println(" > SENDING MESSAGE: " + chunkToEliminate.version + " REMOVED " + PeerClient.getId() + " " + chunkToEliminate.fileId + " " + chunkToEliminate.chunkNo);
-                    byte[] message = MessageFactory.createMessage(chunkToEliminate.version, "REMOVED", PeerClient.getId(), chunkToEliminate.fileId, chunkToEliminate.chunkNo);
-                    PeerClient.getMC().sendMessage(message);
+                if (this.storedFiles.size() == 0) {
+                    System.err.println("Eliminated all chunks and still over capacity!\n");
                 }
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                BigInteger fileId = this.storedFiles.iterator().next();
+                System.out.println("FileNo: " + fileId);
+                String filename = PeerClient.getId() + "/" + fileId + ".ser";
 
+                File file = new File(PeerClient.getId() + "/" + fileId);
+
+                byte[] fileData = Files.readAllBytes(file.toPath());
+
+                //Send new backup message for this file
+                exec.execute(new Backup(fileId, fileData, file.toPath().toString(), 1));
+
+                storedFiles.remove(fileId);
+                this.setOccupiedSpace(this.getOccupiedSpace() - fileData.length);
+                file.delete();
+
+            }
+            System.out.println(" > RECLAIM: New Storage Size is " + overallSpace);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        System.out.println(" > RECLAIM: New Storage Size is " + overallSpace);
 
     }
-
+    /*
     public void decrementCountOfChunk(String fileId, int chunkNo, String senderId) {
 
         if(this.backedUpFiles.containsKey(fileId)){
