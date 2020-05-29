@@ -39,11 +39,11 @@ public class SimpleNode {
         }
     }
 
+    //TODO: DILLING WITH EXCEPTION
     //ask node to get id's successor
-    public SimpleNode getSuccessor(BigInteger id) throws Exception {
+    public SimpleNode getSuccessor() throws Exception {
 
-        byte[] message = MessageFactoryChord.createMessage(3, "GET_SUCCESSOR", id);
-
+        byte[] message = MessageFactoryChord.createMessage(3, "GET_SUCCESSOR", this.id);
 
         SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
         client.connect();
@@ -168,8 +168,8 @@ public class SimpleNode {
 
         try {
         SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
-        if(client.connect())
-            return true;
+        if(!client.connect())
+            return false;
 
         client.write(message);
         client.read();
@@ -178,7 +178,6 @@ public class SimpleNode {
 
         MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
         messageFactoryChord.parseMessage(client.getPeerAppData().array());
-
 
         return messageFactoryChord.messageType.equals("I_AM_OK");
 
