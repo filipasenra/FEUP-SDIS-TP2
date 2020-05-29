@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import com.assigment_2.Protocol.Backup;
 import com.assigment_2.Protocol.Delete;
+import com.assigment_2.Protocol.DeleteResponsability;
 import com.assigment_2.Protocol.Restore;
 import com.assigment_2.Storage.FileInfo;
 import com.assigment_2.SSLEngine.SSLEngineServer;
@@ -45,7 +46,7 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
         BigInteger fileId = Backup.generateFileId(file.getName(), file.lastModified(), file.getParent());
         byte[] fileData = Files.readAllBytes(file.toPath());
 
-        if (!PeerClient.getStorage().getBackedUpFiles().containsKey(fileId))
+        if (!PeerClient.getStorage().getStoredFiles().contains(fileId))
            exec.execute(new Backup(fileId, fileData, filepath, replicationDegree));
         else
            System.out.println("File already backed up!");
@@ -56,12 +57,15 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
         System.out.println(" > File path: " + file_path);
         System.out.println();
 
-        FileInfo fileInfo = PeerClient.getStorage().getFileInfo(file_path);
+        File file = new File(file_path);
+        BigInteger fileId = Backup.generateFileId(file.getName(), file.lastModified(), file.getParent());
 
-        if (fileInfo != null)
-            exec.execute(new Delete(fileInfo.id, fileInfo.replication_degree));
-        else
-            System.out.println("File is not backed up!");
+        if (PeerClient.getStorage().getStoredFilesReplicationDegree().get(fileId) != null)
+            exec.execute(new Delete(fileId, PeerClient.getStorage().getStoredFilesReplicationDegree().get(fileId)));
+        else {
+            exec.execute(new DeleteResponsability(fileId));
+            System.out.println("[DELETION] This peer does not know the file, sending delete responsability to other peers.");
+        }
 
     }
 

@@ -5,6 +5,7 @@ import com.assigment_2.Chunk.Chunk;
 import com.assigment_2.Pair;
 import com.assigment_2.PeerClient;
 import com.assigment_2.Protocol.Backup;
+import com.assigment_2.Protocol.Removed;
 
 import java.awt.desktop.SystemSleepEvent;
 import java.io.*;
@@ -23,6 +24,7 @@ public class Storage implements Serializable {
 
     private final ConcurrentHashMap<BigInteger, FileInfo> backedUpFiles = new ConcurrentHashMap<>();
     private final ArrayList<BigInteger> storedFiles = new ArrayList<>();
+    private final ConcurrentHashMap<BigInteger, Integer> storedFilesReplicationDegree = new ConcurrentHashMap<BigInteger, Integer>();
     private final ConcurrentHashMap<BigInteger, ArrayList<byte[]>> bufferFiles = new ConcurrentHashMap<>();
 
     public Storage() {
@@ -37,6 +39,8 @@ public class Storage implements Serializable {
     public int getOccupiedSpace() {
         return this.occupiedSpace;
     }
+
+    public ConcurrentHashMap<BigInteger, Integer> getStoredFilesReplicationDegree(){ return this.storedFilesReplicationDegree; }
 
     public int getOverallSpace() {
         return this.overallSpace;
@@ -90,9 +94,10 @@ public class Storage implements Serializable {
         return storedFiles;
     }
 
-    public boolean addStoredFile(BigInteger fileId) {
+    public boolean addStoredFile(BigInteger fileId, Integer repDegree) {
         if (!this.storedFiles.contains(fileId)) {
             this.storedFiles.add(fileId);
+            this.storedFilesReplicationDegree.put(fileId, repDegree);
             return true;
         }
 
@@ -154,9 +159,10 @@ public class Storage implements Serializable {
                 byte[] fileData = Files.readAllBytes(file.toPath());
 
                 //Send new backup message for this file
-                exec.execute(new Backup(fileId, fileData, file.toPath().toString(), 1));
+                exec.execute(new Removed(fileId, fileData, file.toPath().toString(), storedFilesReplicationDegree.get(fileId)));
 
                 storedFiles.remove(fileId);
+                storedFilesReplicationDegree.remove(fileId);
                 this.setOccupiedSpace(this.getOccupiedSpace() - fileData.length);
                 file.delete();
 

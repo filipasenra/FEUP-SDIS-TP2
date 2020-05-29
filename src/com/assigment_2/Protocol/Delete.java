@@ -34,9 +34,6 @@ public class Delete implements Runnable {
 
                 this.sn = this.sn.getSuccessor();
 
-                //CONFIRMA SE É O PRÓPRIO
-                if (this.sn.getId().equals(PeerClient.getNode().getId()))
-                    this.sn = PeerClient.getNode().getSuccessor();
 
                 //CONFIRMA SE É O PRIMEIRO
                 if (firstPeer != null && firstPeer.equals(this.sn.getId())) {
