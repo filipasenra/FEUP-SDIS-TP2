@@ -10,12 +10,4 @@ public class Finger {
         this.node = node;
         this.start = start;
     }
-
-    public BigInteger getStart() {
-        return start;
-    }
-
-    public SimpleNode getNode() {
-        return node;
-    }
 }

@@ -18,7 +18,6 @@ public class SimpleNode {
         this.port = port;
         this.m = m;
 
-        //TODO: probably improve this id
         this.id = createId(address, port, m);
     }
 

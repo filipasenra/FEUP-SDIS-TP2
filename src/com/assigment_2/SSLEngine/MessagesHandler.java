@@ -5,5 +5,5 @@ import java.nio.channels.SocketChannel;
 
 public interface MessagesHandler {
 
-    public void run(SocketChannel socketChannel, SSLEngine engine, byte[] message);
+    void run(SocketChannel socketChannel, SSLEngine engine, byte[] message);
 }

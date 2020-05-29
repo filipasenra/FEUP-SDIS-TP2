@@ -132,7 +132,6 @@ public abstract class SSLEngineHandler {
      */
     protected SSLEngineResult.HandshakeStatus read(SocketChannel socketChannel, SSLEngine engine) throws Exception {
 
-
         peerNetData.clear();
 
         return readIntern(socketChannel, engine);

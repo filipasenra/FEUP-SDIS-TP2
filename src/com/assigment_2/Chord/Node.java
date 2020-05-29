@@ -26,10 +26,6 @@ public class Node extends SimpleNode implements Runnable {
 
     }
 
-    public Finger[] getFingerTable() {
-        return fingerTable;
-    }
-
     //ask node to find id's successor
     public SimpleNode find_successor(BigInteger id)  {
 
@@ -96,7 +92,7 @@ public class Node extends SimpleNode implements Runnable {
 
     //called periodically.
     // verifies n's immediate successor and tell the successor about n
-    public void stabilize() throws Exception {
+    public void stabilize() {
 
         int i = 0;
 

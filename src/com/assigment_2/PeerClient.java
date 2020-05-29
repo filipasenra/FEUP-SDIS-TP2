@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 public class PeerClient {
 
     public static final int M = 8;
-    private final static String serializeObjectName = "Storage";
     static private Double version;
     private static String id;
     private static String address;
@@ -100,16 +99,7 @@ public class PeerClient {
         System.out.println("Peer " + getId() + " ready");
 
 
-        //getStorageFromFile();
-
-        //Saves storage before shutdown
-        //Runtime.getRuntime().addShutdownHook(new Thread(PeerClient::saveStorageIntoFile));
-
         return true;
-    }
-
-    public static SimpleNode getSimpleNode() {
-        return simpleNode;
     }
 
     public static Node getNode() {
@@ -126,58 +116,6 @@ public class PeerClient {
 
     public static ScheduledThreadPoolExecutor getExec() {
         return exec;
-    }
-
-    //saves this peer storage in a file called storage.ser
-    private static void saveStorageIntoFile() {
-
-        obj.stop();
-
-        try {
-            String filename = PeerClient.getId() + "/" + serializeObjectName + ".ser";
-
-            File file = new File(filename);
-            if (!file.exists()) {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            } else {
-                file.delete();
-            }
-
-            FileOutputStream fileOutputStream = new FileOutputStream(filename);
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
-            objectOutputStream.writeObject(storage);
-            objectOutputStream.close();
-            fileOutputStream.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    private static void getStorageFromFile() {
-        try {
-            String filename = PeerClient.getId() + "/" + serializeObjectName + ".ser";
-
-            File file = new File(filename);
-            if (!file.exists()) {
-                return;
-            }
-
-            FileInputStream fileInputStream = new FileInputStream(filename);
-            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
-            storage = (Storage) objectInputStream.readObject();
-            objectInputStream.close();
-            fileInputStream.close();
-
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static Double getVersion() {
-        return version;
     }
 
     public static Peer getObj() {
