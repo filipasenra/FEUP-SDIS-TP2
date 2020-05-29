@@ -115,6 +115,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
     private void manageDelete() throws Exception {
 
         if (PeerClient.getStorage().getStoredFiles().remove(messageFactoryChord.requestId)) {
+            PeerClient.getStorage().getStoredFilesReplicationDegree().remove(messageFactoryChord.requestId);
             File file = new File(PeerClient.getId() + "/" + messageFactoryChord.requestId);
             byte[] fileData = Files.readAllBytes(file.toPath());
 
@@ -191,7 +192,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
                 fos.close();
 
-                PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId);
+                PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId, messageFactoryChord.repDegree);
                 PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
 
                 PeerClient.getStorage().setOccupiedSpace(PeerClient.getStorage().getOccupiedSpace() + fileSize);
@@ -258,7 +259,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
                 fos.close();
 
-                PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId);
+                PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId, messageFactoryChord.repDegree);
                 PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
 
                 PeerClient.getStorage().setOccupiedSpace(PeerClient.getStorage().getOccupiedSpace() + fileSize);
