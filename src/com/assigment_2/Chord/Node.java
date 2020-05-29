@@ -46,6 +46,7 @@ public class Node extends SimpleNode implements Runnable {
 
         SimpleNode successor_node = n_.find_successor(id);
 
+        //TODO: change this to a more elegant way like the report states
         if(successor_node == null || !successor_node.is_alive())
             return this.getSuccessor().find_successor(id);
 
