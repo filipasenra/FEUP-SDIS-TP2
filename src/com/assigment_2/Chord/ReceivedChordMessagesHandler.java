@@ -62,6 +62,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                     break;
                 case "CHECK_UP":
                     manageCheckUp();
+                    break;
                 default:
                     System.err.println("NOT A VALID PROTOCOL: " + this.messageFactoryChord.messageType);
             }
