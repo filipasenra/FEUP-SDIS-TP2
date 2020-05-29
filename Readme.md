@@ -19,11 +19,11 @@ Made by
 
 #### In folder out:
 
-1. java com.assigment_2.PeerClient <version> <rmi_peer_ap> `<address>` `<port>` 
+1. `java com.assigment_2.PeerClient <version> <rmi_peer_ap> <address> <port>` 
 
    **Ex:** java com.assigment_2.PeerClient 2.0 1 "localhost" 9222
    
-2. java com.assigment_2.PeerClient <version> <rmi_peer_ap> <address> <port> <address_initiator> <port_initiator> 
+2. `java com.assigment_2.PeerClient <version> <rmi_peer_ap> <address> <port> <address_initiator> <port_initiator>` 
 
    **Ex:** java com.assigment_2.PeerClient 2.0 2 "localhost" 9223 "localhost" 9222
 
@@ -32,7 +32,7 @@ Made by
 
 #### In folder out:
 
-1. java com.assigment_2.TestApp <rmi_peer_ap> <sub_protocol> <arguments_of_protocol>
+1. `java com.assigment_2.TestApp <rmi_peer_ap> <sub_protocol> <arguments_of_protocol>`
    
    2.1. <rmi_peer_ap> BACKUP <file_path> <replication_degree>
    
