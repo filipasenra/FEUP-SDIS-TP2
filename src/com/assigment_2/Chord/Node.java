@@ -130,19 +130,20 @@ public class Node extends SimpleNode implements Runnable {
     }
 
     //n' thinks it might be our predecessor
-    public void notify(SimpleNode n_) {
+    public boolean notify(SimpleNode n_) {
 
         if(n_ == null)
-            return;
+            return false;
 
         if(n_.id.equals(this.id))
-            return;
+            return false;
 
         if(this.predecessor == null)
             this.predecessor = n_;
         else if( isBetween(n_.id, this.predecessor.id, this.id))
             this.predecessor = n_;
 
+        return true;
     }
 
     //called periodically. refreshes finger table entries.

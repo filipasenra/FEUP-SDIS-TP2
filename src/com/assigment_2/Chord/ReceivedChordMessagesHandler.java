@@ -86,7 +86,9 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
     private void manageNotify() throws Exception {
 
-        PeerClient.getNode().notify(new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, PeerClient.getNode().getM()));
+        if(PeerClient.getNode().notify(new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, PeerClient.getNode().getM()))){
+            //send his files to him
+        }
 
         byte[] message = MessageFactoryChord.createMessage(3, "OK");
 
