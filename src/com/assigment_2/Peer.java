@@ -78,7 +78,7 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
         File file = new File(file_path);
         BigInteger id = Backup.generateFileId(file.getName(), file.lastModified(), file.getParent());
 
-        exec.execute(new Restore(id));
+        exec.execute(new Restore(id, file_path));
     }
 
     public void reclaim(String disk_space) {

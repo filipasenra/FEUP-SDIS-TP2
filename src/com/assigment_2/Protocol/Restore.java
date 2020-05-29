@@ -2,25 +2,22 @@ package com.assigment_2.Protocol;
 
 import com.assigment_2.Chord.MessageFactoryChord;
 import com.assigment_2.Chord.SimpleNode;
-import com.assigment_2.Peer;
 import com.assigment_2.PeerClient;
 import com.assigment_2.SSLEngine.SSLEngineClient;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.math.BigInteger;
 
 public class Restore implements Runnable {
+    private final String filepath;
     BigInteger fileId;
     BigInteger successorId;
     SimpleNode sn;
     BigInteger firstPeer;
 
-    public Restore(BigInteger fileId) {
+    public Restore(BigInteger fileId, String filepath) {
         this.fileId = fileId;
         this.successorId = fileId;
         this.sn = PeerClient.getNode().find_successor(fileId);
+        this.filepath = filepath;
     }
 
     @Override
@@ -58,17 +55,15 @@ public class Restore implements Runnable {
 
                 } catch (Exception e) {
                     this.sn = PeerClient.getNode().find_successor(this.sn.getId());
-                    System.out.println("OLAAAAAa");
                     continue;
                 }
 
                 MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
                 messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-                System.out.println("RESTORE TYP " + messageFactoryChord.messageType);
-
                 if (messageFactoryChord.messageType.equals("SENDING_FILE")) {
                     System.out.println("Waiting for peer to send the file...");
+                    PeerClient.getStorage().addFilePathToBuffer(fileId, filepath);
                     break;
                 }
 

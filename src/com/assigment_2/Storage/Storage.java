@@ -34,6 +34,9 @@ public class Storage implements Serializable {
     //buffer to store files while they are being received
     private final ConcurrentHashMap<BigInteger, ArrayList<byte[]>> bufferFiles = new ConcurrentHashMap<>();
 
+    //buffer for file path
+    private final ConcurrentHashMap<BigInteger, String> bufferFilePath = new ConcurrentHashMap<>();
+
     public Storage() {
         this.overallSpace = -1;
         this.occupiedSpace = 0;
@@ -64,6 +67,20 @@ public class Storage implements Serializable {
         } else {
             return false;
         }
+    }
+
+    public void addFilePathToBuffer(BigInteger fileId, String filepath){
+
+        this.bufferFilePath.put(fileId, filepath);
+
+    }
+
+    public void removeFilePathFromBuffer(BigInteger fileId){
+        this.bufferFilePath.remove(fileId);
+    }
+
+    public String getFilePathFromBuffer(BigInteger fileId){
+        return this.bufferFilePath.get(fileId);
     }
 
     public boolean removeBufferedFile(BigInteger fileId) {

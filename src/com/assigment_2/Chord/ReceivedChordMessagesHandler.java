@@ -171,12 +171,14 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
         PeerClient.getStorage().addToBuffer(messageFactoryChord.requestId, messageFactoryChord.data, messageFactoryChord.chunkNo);
 
+        if (PeerClient.getStorage().getBackedUpFiles().containsKey(messageFactoryChord.requestId)) {
+
+            sendBackupFailedMessage();
+            return;
+        }
+
         if (PeerClient.getStorage().getStoredFiles().contains(messageFactoryChord.requestId)) {
             System.out.println("[FAILED MESSAGE] ALREADY HAVE FILE");
-
-        } else if (PeerClient.getStorage().getBackedUpFiles().containsKey(messageFactoryChord.requestId)) {
-
-            System.out.println("SENT A BACKED UP OF THIS FILE");
 
         } else {
 
@@ -274,6 +276,25 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
     }
 
+    private String getNameOfFile(String filepath) {
+        String extension;
+        String name;
+        String recovered;
+
+        int j = filepath.lastIndexOf('.');
+        int indexOfFileName = filepath.lastIndexOf('/');
+
+        indexOfFileName++;
+
+        if (j > 0) {
+            extension = filepath.substring(j + 1);
+            name = filepath.substring(indexOfFileName, j);
+            recovered = name + "." + extension;
+        } else
+            recovered = filepath + "_";
+        return recovered;
+    }
+
     private void manageRestoring() throws Exception {
 
         System.out.println("RESTORING");
@@ -283,7 +304,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
         //Quando recebeu o ultimo pedaço de informação
         if (messageFactoryChord.data.length < Backup.backupDataSize) {
 
-            String filename = PeerClient.getId() + "/" + messageFactoryChord.requestId;
+            String filename = PeerClient.getId() + "/" + this.getNameOfFile(PeerClient.getStorage().getFilePathFromBuffer(messageFactoryChord.requestId));
 
             File file = new File(filename);
             int fileSize = 0;
@@ -319,6 +340,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
                 PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId, messageFactoryChord.repDegree);
                 PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
+                PeerClient.getStorage().removeFilePathFromBuffer(messageFactoryChord.requestId);
 
                 PeerClient.getStorage().setOccupiedSpace(PeerClient.getStorage().getOccupiedSpace() + fileSize);
                 System.out.println("Restore complete! ");
