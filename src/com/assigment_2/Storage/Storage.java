@@ -86,7 +86,7 @@ public class Storage implements Serializable {
 
     public boolean hasFileStored(BigInteger id) {
 
-        return this.storedFilesReplicationDegree.contains(id);
+        return this.storedFiles.contains(id) || this.storedFilesReplicationDegree.containsKey(id);
 
     }
 
