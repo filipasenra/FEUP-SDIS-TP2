@@ -1,5 +1,6 @@
 package com.assigment_2.Chord;
 
+import com.assigment_2.Peer;
 import com.assigment_2.PeerClient;
 import com.assigment_2.Protocol.Backup;
 import com.assigment_2.Protocol.Delete;
@@ -170,70 +171,74 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
         if (PeerClient.getStorage().getStoredFiles().contains(messageFactoryChord.requestId)) {
             System.out.println("[FAILED MESSAGE] ALREADY HAVE FILE");
-            sendBackupFailedMessage();
-            return;
-        }
 
-        //Quando recebeu o ultimo pedaço de informação
-        if (messageFactoryChord.data.length < Backup.backupDataSize) {
+        } else if (PeerClient.getStorage().getBackedUpFiles().containsKey(messageFactoryChord.requestId)) {
 
-            String filename = PeerClient.getId() + "/" + messageFactoryChord.requestId;
+            System.out.println("SENT A BACKED UP OF THIS FILE");
 
-            File file = new File(filename);
-            try {
-                if (file.exists()) {
-                    file.delete();
-                }
+        } else {
 
-                file.getParentFile().mkdirs();
-                file.createNewFile();
+            //Quando recebeu o ultimo pedaço de informação
+            if (messageFactoryChord.data.length < Backup.backupDataSize) {
 
-                FileOutputStream fos = new FileOutputStream(filename);
-                int fileSize = 0;
+                String filename = PeerClient.getId() + "/" + messageFactoryChord.requestId;
 
-
-                for (byte[] data : PeerClient.getStorage().getBufferFromFile(messageFactoryChord.requestId)) {
-                    if (data == null) {
-
-                        sendBackupFailedMessage();
-
-                        fos.close();
+                File file = new File(filename);
+                try {
+                    if (file.exists()) {
                         file.delete();
-
-                        PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
-
-
-                        System.err.println("An error occurred while receiving file data and some data is missing.");
-                        return;
-                    } else if (PeerClient.getStorage().getOverallSpace() != -1 && fileSize > PeerClient.getStorage().getOverallSpace() - PeerClient.getStorage().getOccupiedSpace()) {
-
-                        sendBackupFailedMessage();
-
-
-                        fos.close();
-                        file.delete();
-
-                        PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
-
-                        System.err.println("This peer's memory is full, cannot save any more data.");
-
-
-                        return;
                     }
-                    fileSize += data.length;
-                    fos.write(data);
 
+                    file.getParentFile().mkdirs();
+                    file.createNewFile();
+
+                    FileOutputStream fos = new FileOutputStream(filename);
+                    int fileSize = 0;
+
+
+                    for (byte[] data : PeerClient.getStorage().getBufferFromFile(messageFactoryChord.requestId)) {
+                        if (data == null) {
+
+                            sendBackupFailedMessage();
+
+                            fos.close();
+                            file.delete();
+
+                            PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
+
+
+                            System.err.println("An error occurred while receiving file data and some data is missing.");
+                            return;
+                        } else if (PeerClient.getStorage().getOverallSpace() != -1 && fileSize > PeerClient.getStorage().getOverallSpace() - PeerClient.getStorage().getOccupiedSpace()) {
+
+                            sendBackupFailedMessage();
+
+
+                            fos.close();
+                            file.delete();
+
+                            PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
+
+                            System.err.println("This peer's memory is full, cannot save any more data.");
+
+
+                            return;
+                        }
+                        fileSize += data.length;
+                        fos.write(data);
+
+                    }
+
+                    fos.close();
+
+                    PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId, messageFactoryChord.repDegree);
+                    PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
+
+                    PeerClient.getStorage().setOccupiedSpace(PeerClient.getStorage().getOccupiedSpace() + fileSize);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-
-                fos.close();
-
-                PeerClient.getStorage().addStoredFile(messageFactoryChord.requestId, messageFactoryChord.repDegree);
-                PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
-
-                PeerClient.getStorage().setOccupiedSpace(PeerClient.getStorage().getOccupiedSpace() + fileSize);
-
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
 
