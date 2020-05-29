@@ -19,7 +19,7 @@ Made by
 
 #### In folder out:
 
-1. java com.assigment_2.PeerClient <version> <rmi_peer_ap> <address> <port> 
+1. java com.assigment_2.PeerClient <version> <rmi_peer_ap> `<address>` `<port>` 
 
    **Ex:** java com.assigment_2.PeerClient 2.0 1 "localhost" 9222
    
