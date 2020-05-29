@@ -64,91 +64,127 @@ public class SimpleNode {
     }
 
     //ask node to find id's successor
-    public SimpleNode find_successor(BigInteger id) throws Exception {
+    public SimpleNode find_successor(BigInteger id) {
 
         byte[] message = MessageFactoryChord.createMessage(3, "FIND_SUCCESSOR", id);
 
 
-        SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
+        try {
+            SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
 
+            client.connect();
+            client.write(message);
+            client.read();
+            client.shutdown();
 
-        client.connect();
+            MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
+            messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-        client.write(message);
-        client.read();
-        client.shutdown();
+            if (messageFactoryChord.messageType.equals("SUCCESSOR")) {
 
-        MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
-        messageFactoryChord.parseMessage(client.getPeerAppData().array());
+                return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, m);
 
-        if (messageFactoryChord.messageType.equals("SUCCESSOR")) {
-
-            return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, m);
-
-        } else {
-            throw new IllegalStateException("ERROR: Didn't received a SUCCESSOR answer to FIND_SUCCESSOR");
+            } else {
+                throw new IllegalStateException("ERROR: Didn't received a SUCCESSOR answer to FIND_SUCCESSOR");
+            }
+        } catch (Exception e) {
+            return null;
         }
     }
 
     //ask node n to find id's predecessor
-    protected SimpleNode find_predecessor() throws Exception {
+    protected SimpleNode find_predecessor() {
 
-        byte[] message = MessageFactoryChord.createMessage(3, "FIND_PREDECESSOR", id);
+        try {
+            byte[] message = MessageFactoryChord.createMessage(3, "FIND_PREDECESSOR", id);
 
-        SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
-        client.connect();
-        client.write(message);
-        client.read();
-        client.shutdown();
+            SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
+            client.connect();
+            client.write(message);
+            client.read();
+            client.shutdown();
 
-        MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
-        messageFactoryChord.parseMessage(client.getPeerAppData().array());
+            MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
+            messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-        if (messageFactoryChord.messageType.equals("PREDECESSOR")) {
+            if (messageFactoryChord.messageType.equals("PREDECESSOR")) {
 
-            return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, m);
+                return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, m);
 
-        } else if(messageFactoryChord.messageType.equals("NOTFOUND")) {
+            } else if (messageFactoryChord.messageType.equals("NOTFOUND")) {
 
+                return null;
+
+            } else {
+
+                System.out.println(new String(client.getPeerAppData().array()));
+                throw new IllegalStateException("ERROR: Didn't received a PREDECESSOR OR NOTFOUND answer to FIND_PREDECESSOR");
+
+            }
+
+        } catch (Exception e) {
             return null;
-
-        } else {
-
-            System.out.println(new String(client.getPeerAppData().array()));
-            throw new IllegalStateException("ERROR: Didn't received a PREDECESSOR OR NOTFOUND answer to FIND_PREDECESSOR");
-
         }
 
     }
 
 
-    protected void notifyIntern(SimpleNode node) throws Exception {
+    protected boolean notifyIntern(SimpleNode node) {
 
         if(this.id.equals(node.id))
-            return;
+            return true;
 
         byte[] message = MessageFactoryChord.createMessage(3, "NOTIFY", node.id, node.address, node.port);
 
+        try {
+            SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
+            client.connect();
+            client.write(message);
+            client.read();
+            client.shutdown();
+
+            MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
+            messageFactoryChord.parseMessage(client.getPeerAppData().array());
+
+            if (messageFactoryChord.messageType.equals("OK")) {
+
+                return true;
+
+            } else {
+
+                System.out.println(new String(client.getPeerAppData().array()));
+                throw new IllegalStateException("ERROR: Didn't received a OK answer to FIND_PREDECESSOR");
+
+            }
+        } catch (Exception e) {
+            return false;
+        }
+
+    }
+
+    protected boolean is_alive() {
+
+        byte[] message = MessageFactoryChord.createMessage(3, "CHECK_UP", this.id);
+
+        try {
         SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
-        client.connect();
+        if(client.connect())
+            return true;
+
         client.write(message);
         client.read();
         client.shutdown();
 
+
         MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
         messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-        if (messageFactoryChord.messageType.equals("OK")) {
 
-            return;
+        return messageFactoryChord.messageType.equals("I_AM_OK");
 
-        } else {
-
-            System.out.println(new String(client.getPeerAppData().array()));
-            throw new IllegalStateException("ERROR: Didn't received a OK answer to FIND_PREDECESSOR");
-
+        } catch (Exception e) {
+            return false;
         }
-
     }
 
     public String getAddress() {

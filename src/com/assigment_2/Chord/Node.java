@@ -26,7 +26,7 @@ public class Node extends SimpleNode implements Runnable {
     }
 
     //ask node to find id's successor
-    public SimpleNode find_successor(BigInteger id) throws Exception {
+    public SimpleNode find_successor(BigInteger id)  {
 
         if(id.equals(this.id))
             return this;
@@ -91,7 +91,8 @@ public class Node extends SimpleNode implements Runnable {
         }
 
         if(!this.successor.id.equals(this.id))
-            this.successor.notifyIntern(this);
+            if (!this.successor.notifyIntern(this))
+                this.successor = this;
     }
 
     //n' thinks it might be our predecessor
@@ -117,7 +118,7 @@ public class Node extends SimpleNode implements Runnable {
         //find last node p whose i_th finger might be n
         SimpleNode p = find_successor(this.id.add(new BigInteger("2").pow(next)));
 
-        this.fingerTable[next] = new Finger(p, calculate_start(next));
+        this.fingerTable[next] = (p == null) ? null : new Finger(p, calculate_start(next));
 
         next++;
 
@@ -126,9 +127,9 @@ public class Node extends SimpleNode implements Runnable {
     }
 
     //called periodically. checks whether predecessor has failed
-    public void check_predecessor() {
+    public void check_predecessor() throws Exception {
 
-        if(false /* failed */)
+        if(this.predecessor != null && !this.predecessor.is_alive())
             predecessor = null;
 
     }
@@ -151,6 +152,9 @@ public class Node extends SimpleNode implements Runnable {
         System.out.println("  FINGER TABLE of " + this.id + ":");
 
         for (Finger finger : this.fingerTable) {
+            if(finger == null)
+                continue;
+
             System.out.println("     start: " + finger.start + " Id:" + finger.node.id);
         }
 
@@ -162,6 +166,7 @@ public class Node extends SimpleNode implements Runnable {
 
         try {
 
+            this.check_predecessor();
             this.fix_fingers();
             this.stabilize();
            // this.printInfo();
