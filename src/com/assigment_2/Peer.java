@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import com.assigment_2.Protocol.Backup;
 import com.assigment_2.Protocol.Delete;
+import com.assigment_2.Protocol.DeleteResponsability;
 import com.assigment_2.Protocol.Restore;
 import com.assigment_2.Storage.FileInfo;
 import com.assigment_2.SSLEngine.SSLEngineServer;
@@ -60,8 +61,10 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
 
         if (PeerClient.getStorage().getStoredFilesReplicationDegree().get(fileId) != null)
             exec.execute(new Delete(fileId, PeerClient.getStorage().getStoredFilesReplicationDegree().get(fileId)));
-        else
-            System.out.println("File is not backed up!");
+        else {
+            exec.execute(new DeleteResponsability(fileId));
+            System.out.println("[DELETION] This peer does not know the file, sending delete responsability to other peers.");
+        }
 
     }
 
