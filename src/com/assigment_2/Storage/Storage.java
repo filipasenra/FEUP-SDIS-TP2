@@ -12,9 +12,11 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -180,7 +182,7 @@ public class Storage implements Serializable {
     }
 
 
-    public void setOverallSpace(int targetSpace, ScheduledThreadPoolExecutor exec) {
+    public List<Future<?>> setOverallSpace(int targetSpace, ScheduledThreadPoolExecutor exec) {
 
         try {
             targetSpace = targetSpace * 1000; //to kB
@@ -190,7 +192,7 @@ public class Storage implements Serializable {
 
             this.overallSpace = targetSpace;
 
-
+            var futures = new ArrayList<Future<?>>();
             while (targetSpace < occupiedSpace) {
 
                 if (this.storedFiles.size() == 0) {
@@ -206,7 +208,11 @@ public class Storage implements Serializable {
                 byte[] fileData = Files.readAllBytes(file.toPath());
 
                 //Send new backup message for this file
-                exec.execute(new Removed(fileId, fileData, file.toPath().toString(), storedFilesReplicationDegree.get(fileId)));
+                var future = exec.submit(
+                        new Removed(fileId, fileData, file.toPath().toString(),
+                                storedFilesReplicationDegree.get(fileId))
+                );
+                futures.add(future);
 
                 storedFiles.remove(fileId);
                 storedFilesReplicationDegree.remove(fileId);
@@ -215,11 +221,12 @@ public class Storage implements Serializable {
 
             }
             System.out.println(" > RECLAIM: New Storage Size is " + overallSpace);
+            return futures;
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-
+        return new ArrayList<>();
     }
     /*
     public void decrementCountOfChunk(String fileId, int chunkNo, String senderId) {
