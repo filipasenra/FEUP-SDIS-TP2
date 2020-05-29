@@ -32,7 +32,7 @@ public class Delete implements Runnable {
             while (this.deletedCounter < this.replicationDegree) {
                 PeerClient.getStorage().removeBackedUpFile(this.fileId);
 
-                this.sn = this.sn.getSuccessor(this.successorId);
+                this.sn = this.sn.getSuccessor();
 
                 //CONFIRMA SE É O PRÓPRIO
                 if (this.sn.getId().equals(PeerClient.getNode().getId()))

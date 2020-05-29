@@ -158,7 +158,12 @@ public abstract class SSLEngineHandler {
             }
 
             System.out.println("Received end of stream. Closing connection.");
-            engine.closeInbound();
+
+            try {
+                engine.closeInbound();
+            } catch (Exception e) {
+
+            }
             closeConnection(socketChannel, engine);
 
             return null;

@@ -62,7 +62,8 @@ public class PeerClient {
         }
 
         node = new Node(address, port, M);
-        node.join(simpleNode);
+        if (!node.join(simpleNode))
+            return false;
 
         node.printInfo();
 

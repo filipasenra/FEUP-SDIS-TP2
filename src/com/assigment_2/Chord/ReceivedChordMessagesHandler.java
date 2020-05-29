@@ -1,21 +1,17 @@
 package com.assigment_2.Chord;
 
-import com.assigment_2.Peer;
 import com.assigment_2.PeerClient;
 import com.assigment_2.Protocol.Backup;
-import com.assigment_2.Protocol.Restore;
 import com.assigment_2.Protocol.SendFile;
 import com.assigment_2.SSLEngine.MessagesHandler;
 
 import javax.net.ssl.SSLEngine;
-import java.awt.desktop.SystemSleepEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Files;
-import java.util.Arrays;
 
 public class ReceivedChordMessagesHandler implements MessagesHandler {
     MessageFactoryChord messageFactoryChord;
@@ -60,12 +56,23 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                 case "GET_SUCCESSOR":
                     manageGetSuccessor();
                     break;
+                case "CHECK_UP":
+                    manageCheckUp();
+                    break;
                 default:
                     System.err.println("NOT A VALID PROTOCOL: " + this.messageFactoryChord.messageType);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void manageCheckUp() throws Exception {
+
+        byte[] message = MessageFactoryChord.createMessage(3, "I_AM_OK");
+
+        PeerClient.getObj().write(socketChannel, engine, message);
+
     }
 
     private void manageNotify() throws Exception {

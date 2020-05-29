@@ -41,7 +41,9 @@ public class Backup implements Runnable {
             }
 
             while (this.perceivedRepDegree < this.replicationDegree) {
-                this.sn = this.sn.getSuccessor(this.successorId);
+                System.out.println("BACKUP");
+                System.out.println(this.sn.getId());
+                this.sn = this.sn.getSuccessor();
 
                 //CONFIRMA SE É O PRÓPRIO
                 if (this.sn.getId().equals(PeerClient.getNode().getId()))
