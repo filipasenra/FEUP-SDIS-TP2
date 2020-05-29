@@ -9,16 +9,13 @@ import java.math.BigInteger;
 
 public class DeleteResponsability implements Runnable {
     BigInteger fileId;
-    int replicationDegree;
     int deletedCounter;
     SimpleNode sn;
-    BigInteger successorId;
     BigInteger firstPeer;
 
     public DeleteResponsability(BigInteger fileId) {
         this.deletedCounter = 0;
         this.fileId = fileId;
-        this.successorId = fileId;
         this.sn = PeerClient.getNode().find_successor(fileId);
     }
 
@@ -26,20 +23,20 @@ public class DeleteResponsability implements Runnable {
     public void run() {
 
         while (true) {
+            System.out.println("[DELETE RESPONSIBILITY]");
+
             this.sn = this.sn.getSuccessor();
 
-            //CONFIRMA SE É O PRÓPRIO
+            //check if we are the successor
             if (this.sn.getId().equals(PeerClient.getNode().getId()))
                 this.sn = PeerClient.getNode().getSuccessor();
 
-            //CONFIRMA SE É O PRIMEIRO
+            //check if we have completed a full loop around the circle
             if (firstPeer != null && firstPeer.equals(this.sn.getId())) {
-                System.out.println("Not all stored copies were deleted!");
+                System.err.println("[WARNING MESSAGE] DELETE WAS NOT COMPLETED: couldn't find a peer with this peer backed up!");
                 break;
             } else if (firstPeer == null)
                 firstPeer = this.sn.getId();
-
-            System.out.println("SUCCESSOR de " + this.successorId + " is " + sn.getId());
 
             byte[] message;
 
@@ -63,7 +60,7 @@ public class DeleteResponsability implements Runnable {
             messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
             if (messageFactoryChord.messageType.equals("DELETED_RESPONSABILITY_ACCEPTED")) {
-                System.out.println("Received deleted responsability accepted");
+                System.err.println("[SUCCESS MESSAGE] DELETE WAS RESPONSIBILITY ACCEPTED");
                 break;
             }
         }

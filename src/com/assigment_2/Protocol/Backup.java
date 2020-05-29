@@ -36,30 +36,27 @@ public class Backup implements Runnable {
         try {
 
             if (PeerClient.getNode().getId().equals(PeerClient.getNode().getSuccessor().getId())) {
-                System.out.println("There aren't any peers available for backup!");
+                System.err.println("[FAILED MESSAGE] There aren't any peers available for backup! Try later!");
                 return;
             }
 
             while (this.perceivedRepDegree < this.replicationDegree) {
-                System.out.println("BACKUP");
+                System.out.println("[BACKUP]");
                 System.out.println(this.sn.getId());
 
-                //PODE FALHAR AQUI
                 this.sn = this.sn.getSuccessor();
 
-                //CONFIRMA SE É O PRÓPRIO
+                //check if we are the successor
                 if (this.sn.getId().equals(PeerClient.getNode().getId()))
                     this.sn = PeerClient.getNode().getSuccessor();
 
-                //CONFIRMA SE É O PRIMEIRO
+                //check if we have completed a full loop around the circle
                 if (firstPeer != null && firstPeer.equals(this.sn.getId())) {
-                    System.out.println("Replication degree not achieved!");
+                    System.err.println("[WARNING MESSAGE] BACKUP COMPLETED: Replication degree not achieved!");
                     break;
                 }
                 else if (firstPeer == null)
                     firstPeer = this.sn.getId();
-
-                System.out.println("SUCCESSOR de " + this.successorId + " is " + sn.getId());
 
                 PeerClient.getNode().printInfo();
 
@@ -116,6 +113,9 @@ public class Backup implements Runnable {
 
         if (this.perceivedRepDegree > 0 )
          PeerClient.getStorage().addBackedUpFile(fileId, new FileInfo(filepath, fileId, replicationDegree));
+
+        if(this.perceivedRepDegree == this.replicationDegree)
+            System.out.println("[SUCCESS MESSAGE] BACKUP COMPLETED!");
 
     }
 

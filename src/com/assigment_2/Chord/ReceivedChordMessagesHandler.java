@@ -178,7 +178,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
         }
 
         if (PeerClient.getStorage().getStoredFiles().contains(messageFactoryChord.requestId)) {
-            System.err.println("[SUCCESS MESSAGE] ALREADY HAVE THE FILE " + messageFactoryChord.requestId);
+            System.out.println("[SUCCESS MESSAGE] ALREADY HAVE THE FILE " + messageFactoryChord.requestId);
 
         } else {
 
@@ -267,7 +267,7 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
         if (PeerClient.getStorage().hasFileStored(fileId)) {
 
-            System.err.println("[SUCCESS MESSAGE] TOOK RESPONSIBILITY FOR DELETING THE FILE " + messageFactoryChord.requestId);
+            System.out.println("[SUCCESS MESSAGE] TOOK RESPONSIBILITY FOR DELETING THE FILE " + messageFactoryChord.requestId);
             byte[] message = MessageFactoryChord.createMessage(3, "DELETED_RESPONSABILITY_ACCEPTED", PeerClient.getNode().id);
             PeerClient.getObj().write(socketChannel, engine, message);
             PeerClient.getExec().execute(new Delete(fileId, PeerClient.getStorage().getStoredFilesReplicationDegree().get(fileId)));

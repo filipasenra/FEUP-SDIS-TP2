@@ -4,11 +4,7 @@ import com.assigment_2.Chord.MessageFactoryChord;
 import com.assigment_2.Chord.SimpleNode;
 import com.assigment_2.PeerClient;
 import com.assigment_2.SSLEngine.SSLEngineClient;
-
-import java.awt.desktop.SystemSleepEvent;
 import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.util.Arrays;
 
 public class Delete implements Runnable {
     BigInteger fileId;
@@ -31,22 +27,19 @@ public class Delete implements Runnable {
 
         try {
             while (this.deletedCounter < this.replicationDegree) {
-                System.out.println("DELETE: " + this.deletedCounter);
+                System.out.println("[DELETE]");
                 PeerClient.getStorage().removeBackedUpFile(this.fileId);
 
                 this.sn = this.sn.getSuccessor();
 
-                //CONFIRMA SE É O PRIMEIRO
+                //check if we have completed a full loop around the circle
                 if (firstPeer != null && firstPeer.equals(this.sn.getId())) {
-                    System.out.println("Not all stored copies were deleted!");
+                    System.err.println("[WARNING MESSAGE] DELETE COMPLETED: not all copies were deleted!");
                     break;
                 } else if (firstPeer == null)
                     firstPeer = this.sn.getId();
 
-                System.out.println("SUCCESSOR de " + this.successorId + " is " + sn.getId());
-
                 byte[] message;
-
 
                 message = MessageFactoryChord.createMessage(3, "DELETE", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort());
                 SSLEngineClient client;
@@ -79,6 +72,9 @@ public class Delete implements Runnable {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+
+        if(this.deletedCounter == this.replicationDegree)
+            System.out.println("[SUCCESS MESSAGE] DELETE COMPLETED!");
     }
 
 }

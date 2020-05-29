@@ -26,20 +26,20 @@ public class Restore implements Runnable {
         try {
             while (true) {
 
+                System.out.println("[RESTORE]");
+
                 this.sn = this.sn.getSuccessor();
 
-                //CONFIRMA SE É O PRÓPRIO
+                //check if we are the successor
                 if (this.sn.getId().equals(PeerClient.getNode().getId()))
                     this.sn = PeerClient.getNode().getSuccessor();
 
-                //CONFIRMA SE É O PRIMEIRO
+                //check if we have completed a full loop around the circle
                 if (firstPeer != null && firstPeer.equals(this.sn.getId())) {
-                    System.out.println("Impossible to recover file because no peer seemed to have it backed up!");
+                    System.err.println("[FAILED MESSAGE] NOT RECOVERED: Impossible to recover file because no peer seemed to have it backed up!");
                     break;
                 } else if (firstPeer == null)
                     firstPeer = this.sn.getId();
-
-                System.out.println("SUCCESSOR de " + this.successorId + " is " + sn.getId());
 
                 byte[] message;
                 message = MessageFactoryChord.createMessage(3, "RESTORE", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort());
@@ -62,7 +62,7 @@ public class Restore implements Runnable {
                 messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
                 if (messageFactoryChord.messageType.equals("SENDING_FILE")) {
-                    System.out.println("Waiting for peer to send the file...");
+                    System.out.println("[RESTORE MESSAGE] Waiting for peer to send the file...");
                     PeerClient.getStorage().addFilePathToBuffer(fileId, filepath);
                     break;
                 }

@@ -5,9 +5,7 @@ import com.assigment_2.Chord.SimpleNode;
 import com.assigment_2.PeerClient;
 import com.assigment_2.SSLEngine.SSLEngineClient;
 import com.assigment_2.Storage.FileInfo;
-
 import java.math.BigInteger;
-import java.security.MessageDigest;
 import java.util.Arrays;
 
 public class Removed implements Runnable{
@@ -15,15 +13,14 @@ public class Removed implements Runnable{
     byte[] fileData;
     BigInteger fileId;
     int replicationDegree;
-    int perceivedRepDegree;
     public final static int backupDataSize = 16000;
     SimpleNode sn;
     BigInteger successorId;
     BigInteger firstPeer;
 
 
-    public Removed(BigInteger fileId, byte[] fileData, String filepath, int replicationDegree) throws Exception {
-        this.perceivedRepDegree = 0;
+    public Removed(BigInteger fileId, byte[] fileData, String filepath, int replicationDegree){
+
         this.fileData = fileData;
         this.fileId = fileId;
         this.successorId = fileId;
@@ -37,20 +34,22 @@ public class Removed implements Runnable{
 
 
         if (PeerClient.getNode().getId().equals(PeerClient.getNode().getSuccessor().getId())) {
-            System.out.println("There aren't any peers available for backup!");
+            System.err.println("[FAILED MESSAGE] There aren't any peers available for backup! Try later!");
             return;
         }
 
-        while (this.perceivedRepDegree < this.replicationDegree) {
+        while (true) {
+            System.out.println("[REMOVED]");
+
             this.sn = this.sn.getSuccessor();
 
-            //CONFIRMA SE É O PRÓPRIO
+            //check if we are the successor
             if (this.sn.getId().equals(PeerClient.getNode().getId()))
                 this.sn = PeerClient.getNode().getSuccessor();
 
-            //CONFIRMA SE É O PRIMEIRO
+            //check if we have completed a full loop around the circle
             if (firstPeer != null && firstPeer.equals(this.sn.getId())) {
-                break;
+                System.out.println("[WARNING MESSAGE] REMOVED COMPLETED!");
             } else if (firstPeer == null)
                 firstPeer = this.sn.getId();
 
@@ -97,14 +96,12 @@ public class Removed implements Runnable{
             if (successful) {
                 break;
             }
-            System.out.println("SucessorId: " + this.successorId);
 
-            if (this.perceivedRepDegree < this.replicationDegree) {
-                this.successorId = this.sn.getId();
-            }
+            this.successorId = this.sn.getId();
         }
 
-        PeerClient.getStorage().addBackedUpFile(fileId, new FileInfo(filepath, fileId, replicationDegree));
+
+        System.out.println("[SUCCESS MESSAGE] BACKUP COMPLETED!");
 
     }
 
