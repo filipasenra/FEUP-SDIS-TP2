@@ -15,7 +15,6 @@ public class Node extends SimpleNode implements Runnable {
         super(address, port, m);
 
         this.fingerTable = new Finger[m];
-        System.out.println(m / 2 + 1);
         this.listOfSuccessors = new SimpleNode[m / 2 + 1];
         this.predecessor = null;
 
@@ -24,7 +23,6 @@ public class Node extends SimpleNode implements Runnable {
         }
 
         Arrays.fill(this.listOfSuccessors, this);
-        System.err.println(this.listOfSuccessors[0].address);
 
     }
 
@@ -48,7 +46,7 @@ public class Node extends SimpleNode implements Runnable {
 
         SimpleNode successor_node = n_.find_successor(id);
 
-        if(successor_node == null)
+        if(successor_node == null || !successor_node.is_alive())
             return this.getSuccessor().find_successor(id);
 
         return successor_node;
@@ -107,7 +105,6 @@ public class Node extends SimpleNode implements Runnable {
 
             if(!this.getSuccessor().id.equals(this.id) && !this.listOfSuccessors[i].is_alive()){
                 this.listOfSuccessors[i] = this.listOfSuccessors[i+1];
-                continue;
             }
 
             if (this.listOfSuccessors[i].id.equals(this.id))
@@ -117,8 +114,7 @@ public class Node extends SimpleNode implements Runnable {
 
             if (x != null && !this.id.equals(x.id) && (this.id.equals(this.listOfSuccessors[i].id) || isBetween(x.id, this.id, this.listOfSuccessors[i].id))) {
                 this.listOfSuccessors[i] = x;
-                System.err.println(this.listOfSuccessors[i].port);
-                this.listOfSuccessors[i+1] = this.listOfSuccessors[i].getSuccessor();
+                this.listOfSuccessors[i+1] = (this.listOfSuccessors[i].id.equals(this.id)) ? this.listOfSuccessors[0] : this.listOfSuccessors[i].getSuccessor();
                 fingerTable[0].node = x;
             }
 
@@ -204,7 +200,7 @@ public class Node extends SimpleNode implements Runnable {
             this.check_predecessor();
             this.fix_fingers();
             this.stabilize();
-           // this.printInfo();
+            //this.printInfo();
         } catch (Exception e) {
             e.printStackTrace();
         }

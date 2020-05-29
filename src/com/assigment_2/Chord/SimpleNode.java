@@ -45,7 +45,6 @@ public class SimpleNode {
 
         byte[] message = MessageFactoryChord.createMessage(3, "GET_SUCCESSOR", this.id);
 
-
         SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
         client.connect();
         client.write(message);
