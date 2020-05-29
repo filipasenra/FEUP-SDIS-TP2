@@ -55,8 +55,6 @@ public class Removed implements Runnable{
                 } else if (firstPeer == null)
                     firstPeer = this.sn.getId();
 
-                System.out.println("SUCCESSOR de " + this.successorId + " is " + sn.getId());
-
                 PeerClient.getNode().printInfo();
 
 
