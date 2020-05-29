@@ -135,7 +135,9 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
 
     @Override
     public void shutdown() {
-        reclaim("0");
+        System.out.println("\nSHUTDOWN SERVICE");
+        PeerClient.getStorage().setOverallSpace(0, exec);
         stop();
+        System.out.println();
     }
 }
