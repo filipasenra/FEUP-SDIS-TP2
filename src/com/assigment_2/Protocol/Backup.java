@@ -77,8 +77,6 @@ public class Backup implements Runnable {
                         message = MessageFactoryChord.createMessage(3, "BACKUP", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), this.replicationDegree, chunkNo, Arrays.copyOfRange(this.fileData, i, this.fileData.length));
                     }
 
-
-                    //PODE FALHAR AQUI
                     SSLEngineClient client;
 
                     try {
