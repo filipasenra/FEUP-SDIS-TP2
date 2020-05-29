@@ -40,6 +40,8 @@ public class TestApp {
                 return testClientHandler.doReclaim(arguments);
             case "STATE":
                 return testClientHandler.doState(arguments);
+            case "SHUTDOWN":
+                return testClientHandler.doShutdown(arguments);
             default:
                 System.err.println("NOT A VALID PROTOCOL");
                 return false;

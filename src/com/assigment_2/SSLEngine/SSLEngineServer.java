@@ -179,7 +179,7 @@ public class SSLEngineServer extends SSLEngineHandler implements Runnable {
      *
      * @return if the server is active or not.
      */
-    private boolean isActive() {
+    public boolean isActive() {
         return active;
     }
 }

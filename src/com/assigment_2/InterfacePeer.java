@@ -14,5 +14,7 @@ public interface InterfacePeer extends Remote {
 
     void reclaim(String file_path) throws RemoteException;
 
+    void shutdown() throws RemoteException;
+
     String state() throws IOException;
 }

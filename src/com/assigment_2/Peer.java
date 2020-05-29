@@ -3,6 +3,7 @@ package com.assigment_2;
 import java.io.File;
 import java.math.BigInteger;
 import java.nio.file.Files;
+import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import com.assigment_2.Protocol.Backup;
@@ -130,5 +131,13 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
         }*/
 
         return state.toString();
+    }
+
+    @Override
+    public void shutdown() {
+        System.out.println("\nSHUTDOWN SERVICE");
+        PeerClient.getStorage().setOverallSpace(0, exec);
+        stop();
+        System.out.println();
     }
 }

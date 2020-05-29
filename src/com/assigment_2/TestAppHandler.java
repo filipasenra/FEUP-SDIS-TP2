@@ -104,4 +104,21 @@ public class TestAppHandler {
         return true;
     }
 
+    public boolean doShutdown(String[] arguments) {
+
+        if(arguments.length != 0) {
+            System.err.println("Wrong no. of arguments");
+            System.err.println("Usage: <rmi_peer_ap> SHUTDOWN");
+            return false;
+        }
+
+        try {
+            peer.shutdown();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
 }
