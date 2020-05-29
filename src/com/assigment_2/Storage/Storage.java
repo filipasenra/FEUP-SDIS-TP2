@@ -5,6 +5,7 @@ import com.assigment_2.Chunk.Chunk;
 import com.assigment_2.Pair;
 import com.assigment_2.PeerClient;
 import com.assigment_2.Protocol.Backup;
+import com.assigment_2.Protocol.Removed;
 
 import java.awt.desktop.SystemSleepEvent;
 import java.io.*;
@@ -158,7 +159,7 @@ public class Storage implements Serializable {
                 byte[] fileData = Files.readAllBytes(file.toPath());
 
                 //Send new backup message for this file
-                exec.execute(new Backup(fileId, fileData, file.toPath().toString(), 1));
+                exec.execute(new Removed(fileId, fileData, file.toPath().toString(), storedFilesReplicationDegree.get(fileId)));
 
                 storedFiles.remove(fileId);
                 storedFilesReplicationDegree.remove(fileId);

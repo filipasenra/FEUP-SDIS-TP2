@@ -59,6 +59,9 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                 case "CHECK_UP":
                     manageCheckUp();
                     break;
+                case "REMOVED":
+                    manageBackup();
+                    break;
                 default:
                     System.err.println("NOT A VALID PROTOCOL: " + this.messageFactoryChord.messageType);
             }
@@ -157,8 +160,15 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
     }
 
     private void manageBackup() throws Exception {
+        System.out.println("[BACKUP] Received message backup");
 
         PeerClient.getStorage().addToBuffer(messageFactoryChord.requestId, messageFactoryChord.data, messageFactoryChord.chunkNo);
+
+        if(PeerClient.getStorage().getStoredFiles().contains(messageFactoryChord.requestId)){
+            System.out.println("[FAILED MESSAGE] ALREADY HAVE FILE");
+            sendBackupFailedMessage();
+            return;
+        }
 
         //Quando recebeu o ultimo pedaço de informação
         if (messageFactoryChord.data.length < Backup.backupDataSize) {
@@ -177,19 +187,35 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                 FileOutputStream fos = new FileOutputStream(filename);
                 int fileSize = 0;
 
+
+
                 for (byte[] data : PeerClient.getStorage().getBufferFromFile(messageFactoryChord.requestId)) {
                     if (data == null ) {
 
-                        sendBackupFailedMessage(file, fos);
+                        sendBackupFailedMessage();
+
+                        fos.close();
+                        file.delete();
+
+                        PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
+
 
                         System.err.println("An error occurred while receiving file data and some data is missing.");
                         return;
                     }
                     else if(PeerClient.getStorage().getOverallSpace() !=-1 && fileSize> PeerClient.getStorage().getOverallSpace() - PeerClient.getStorage().getOccupiedSpace()){
 
-                        sendBackupFailedMessage(file, fos);
+                        sendBackupFailedMessage();
+
+
+                        fos.close();
+                        file.delete();
+
+                        PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
 
                         System.err.println("This peer's memory is full, cannot save any more data.");
+
+
                         return;
                     }
                     fileSize += data.length;
@@ -215,14 +241,10 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
         PeerClient.getObj().write(socketChannel, engine, message);
     }
 
-    private void sendBackupFailedMessage(File file, FileOutputStream fos) throws Exception {
+    private void sendBackupFailedMessage() throws Exception {
         byte[] message = MessageFactoryChord.createMessage(3, "BACKUP_FAILED", PeerClient.getNode().id);
         PeerClient.getObj().write(socketChannel, engine, message);
 
-        fos.close();
-        file.delete();
-
-        PeerClient.getStorage().removeBufferedFile(messageFactoryChord.requestId);
     }
 
     private void manageRestoring() throws Exception {

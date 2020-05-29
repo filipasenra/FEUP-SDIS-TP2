@@ -29,7 +29,7 @@ public class Removed implements Runnable{
         this.successorId = fileId;
         this.filepath = filepath;
         this.replicationDegree = replicationDegree;
-        this.sn = PeerClient.getNode().find_successor(fileId);
+        this.sn = PeerClient.getNode().getSuccessor();
     }
 
     @Override
@@ -41,7 +41,8 @@ public class Removed implements Runnable{
                 return;
             }
 
-                this.sn = this.sn.getSuccessor(this.successorId);
+            while (this.perceivedRepDegree < this.replicationDegree) {
+                this.sn = this.sn.getSuccessor();
 
                 //CONFIRMA SE É O PRÓPRIO
                 if (this.sn.getId().equals(PeerClient.getNode().getId()))
@@ -67,9 +68,9 @@ public class Removed implements Runnable{
                     byte[] message;
 
                     if (i + backupDataSize <= this.fileData.length) {
-                        message = MessageFactoryChord.createMessage(3, "BACKUP", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), this.replicationDegree, chunkNo, Arrays.copyOfRange(this.fileData, i, i + backupDataSize));
+                        message = MessageFactoryChord.createMessage(3, "REMOVED", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), this.replicationDegree, chunkNo, Arrays.copyOfRange(this.fileData, i, i + backupDataSize));
                     } else {
-                        message = MessageFactoryChord.createMessage(3, "BACKUP", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), this.replicationDegree, chunkNo, Arrays.copyOfRange(this.fileData, i, this.fileData.length));
+                        message = MessageFactoryChord.createMessage(3, "REMOVED", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort(), this.replicationDegree, chunkNo, Arrays.copyOfRange(this.fileData, i, this.fileData.length));
                     }
 
 
@@ -90,20 +91,20 @@ public class Removed implements Runnable{
                 }
 
                 if (successful) {
-                    this.perceivedRepDegree++;
+                    break;
                 }
+                System.out.println("SucessorId: " + this.successorId);
 
                 if (this.perceivedRepDegree < this.replicationDegree) {
                     this.successorId = this.sn.getId();
                 }
-
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        if (this.perceivedRepDegree > 0)
-            PeerClient.getStorage().addBackedUpFile(fileId, new FileInfo(filepath, fileId, replicationDegree));
+        PeerClient.getStorage().addBackedUpFile(fileId, new FileInfo(filepath, fileId, replicationDegree));
 
     }
 
