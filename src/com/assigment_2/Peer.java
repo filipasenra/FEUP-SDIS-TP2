@@ -3,7 +3,6 @@ package com.assigment_2;
 import java.io.File;
 import java.math.BigInteger;
 import java.nio.file.Files;
-import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
@@ -11,7 +10,6 @@ import com.assigment_2.Protocol.Backup;
 import com.assigment_2.Protocol.Delete;
 import com.assigment_2.Protocol.DeleteResponsability;
 import com.assigment_2.Protocol.Restore;
-import com.assigment_2.Storage.FileInfo;
 import com.assigment_2.SSLEngine.SSLEngineServer;
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -55,7 +53,7 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
             System.out.println("File already backed up!");
     }
 
-    public void deletion(String file_path) throws Exception {
+    public void deletion(String file_path) {
         System.out.println("\nDELETION SERVICE");
         System.out.println(" > File path: " + file_path);
         System.out.println();
@@ -63,7 +61,7 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
         File file = new File(file_path);
         BigInteger fileId = Backup.generateFileId(file.getName(), file.lastModified(), file.getParent());
 
-        if (PeerClient.getStorage().getStoredFilesReplicationDegree().get(fileId) != null)
+        if (PeerClient.getStorage().getStoredFilesReplicationDegree().contains(fileId))
             exec.execute(new Delete(fileId, PeerClient.getStorage().getStoredFilesReplicationDegree().get(fileId)));
         else {
             exec.execute(new DeleteResponsability(fileId));
@@ -72,17 +70,15 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
 
     }
 
-    public void restore(String file_path) throws Exception {
+    public void restore(String file_path) {
         System.out.println("\nRESTORE SERVICE");
         System.out.println(" > File path: " + file_path);
         System.out.println();
 
-        FileInfo fileInfo = PeerClient.getStorage().getFileInfo(file_path);
+        File file = new File(file_path);
+        BigInteger id = Backup.generateFileId(file.getName(), file.lastModified(), file.getParent());
 
-        if (fileInfo != null) {
-            exec.execute(new Restore(fileInfo.id));
-        } else
-            System.out.println("File is not backed up!");
+        exec.execute(new Restore(id));
     }
 
     public void reclaim(String disk_space) {
@@ -138,7 +134,7 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
         try {
             System.out.println("\nSHUTDOWN SERVICE");
             PeerClient.getStorage().setOverallSpace(0, exec);
-            Thread.sleep(10000);
+            //Thread.sleep(10000);
             stop();
             System.out.println();
         } catch (Exception e) {

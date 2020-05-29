@@ -18,7 +18,7 @@ public class Delete implements Runnable {
     BigInteger successorId;
     BigInteger firstPeer;
 
-    public Delete(BigInteger fileId, int replicationDegree) throws Exception {
+    public Delete(BigInteger fileId, int replicationDegree){
         this.deletedCounter = 0;
         this.fileId = fileId;
         this.successorId = fileId;
@@ -28,12 +28,13 @@ public class Delete implements Runnable {
 
     @Override
     public void run() {
+
         try {
             while (this.deletedCounter < this.replicationDegree) {
+                System.out.println("DELETE: " + this.deletedCounter);
                 PeerClient.getStorage().removeBackedUpFile(this.fileId);
 
                 this.sn = this.sn.getSuccessor();
-
 
                 //CONFIRMA SE É O PRIMEIRO
                 if (firstPeer != null && firstPeer.equals(this.sn.getId())) {
@@ -48,20 +49,26 @@ public class Delete implements Runnable {
 
 
                 message = MessageFactoryChord.createMessage(3, "DELETE", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort());
+                SSLEngineClient client;
 
+                try {
+                    client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
 
-                SSLEngineClient client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
+                    client.connect();
+                    client.write(message);
+                    client.read();
+                    client.shutdown();
 
-                client.connect();
-                client.write(message);
-                client.read();
-                client.shutdown();
+                    MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
+                    messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
-                MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
-                messageFactoryChord.parseMessage(client.getPeerAppData().array());
+                    if (messageFactoryChord.messageType.equals("DELETED")) {
+                        this.deletedCounter++;
+                    }
 
-                if (messageFactoryChord.messageType.equals("DELETED")) {
-                    this.deletedCounter++;
+                }catch (Exception e) {
+                    this.sn = PeerClient.getNode().find_successor(this.sn.getId());
+                    continue;
                 }
 
                 if (this.deletedCounter < this.replicationDegree) {

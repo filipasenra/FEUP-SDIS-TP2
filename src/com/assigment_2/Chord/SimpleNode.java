@@ -1,5 +1,6 @@
 package com.assigment_2.Chord;
 
+import com.assigment_2.PeerClient;
 import com.assigment_2.SSLEngine.SSLEngineClient;
 
 import java.math.BigInteger;
@@ -41,15 +42,23 @@ public class SimpleNode {
 
     //TODO: DILLING WITH EXCEPTION
     //ask node to get id's successor
-    public SimpleNode getSuccessor() throws Exception {
+    public SimpleNode getSuccessor() {
 
         byte[] message = MessageFactoryChord.createMessage(3, "GET_SUCCESSOR", this.id);
 
-        SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
-        client.connect();
-        client.write(message);
-        client.read();
-        client.shutdown();
+        SSLEngineClient client;
+
+        try {
+            client = new SSLEngineClient("TLSv1.2", this.address, this.port);
+            client.connect();
+            client.write(message);
+            client.read();
+            client.shutdown();
+        } catch (Exception e){
+
+            return PeerClient.getNode().find_successor(this.id);
+
+        }
 
         MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
         messageFactoryChord.parseMessage(client.getPeerAppData().array());
@@ -69,26 +78,28 @@ public class SimpleNode {
         byte[] message = MessageFactoryChord.createMessage(3, "FIND_SUCCESSOR", id);
 
 
+        SSLEngineClient client;
+
         try {
-            SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
+            client = new SSLEngineClient("TLSv1.2", this.address, this.port);
 
             client.connect();
             client.write(message);
             client.read();
             client.shutdown();
-
-            MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
-            messageFactoryChord.parseMessage(client.getPeerAppData().array());
-
-            if (messageFactoryChord.messageType.equals("SUCCESSOR")) {
-
-                return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, m);
-
-            } else {
-                throw new IllegalStateException("ERROR: Didn't received a SUCCESSOR answer to FIND_SUCCESSOR");
-            }
         } catch (Exception e) {
             return null;
+        }
+
+        MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
+        messageFactoryChord.parseMessage(client.getPeerAppData().array());
+
+        if (messageFactoryChord.messageType.equals("SUCCESSOR")) {
+
+            return new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, m);
+
+        } else {
+            throw new IllegalStateException("ERROR: Didn't received a SUCCESSOR answer to FIND_SUCCESSOR");
         }
     }
 

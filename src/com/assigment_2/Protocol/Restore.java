@@ -17,7 +17,7 @@ public class Restore implements Runnable {
     SimpleNode sn;
     BigInteger firstPeer;
 
-    public Restore(BigInteger fileId) throws Exception {
+    public Restore(BigInteger fileId) {
         this.fileId = fileId;
         this.successorId = fileId;
         this.sn = PeerClient.getNode().find_successor(fileId);
@@ -28,7 +28,6 @@ public class Restore implements Runnable {
 
         try {
             while (true) {
-                PeerClient.getStorage().removeBackedUpFile(this.fileId);
 
                 this.sn = this.sn.getSuccessor();
 
@@ -38,7 +37,7 @@ public class Restore implements Runnable {
 
                 //CONFIRMA SE É O PRIMEIRO
                 if (firstPeer != null && firstPeer.equals(this.sn.getId())) {
-                    System.out.println("Impossible to recover file because no peer was available!");
+                    System.out.println("Impossible to recover file because no peer seemed to have it backed up!");
                     break;
                 } else if (firstPeer == null)
                     firstPeer = this.sn.getId();
@@ -47,15 +46,26 @@ public class Restore implements Runnable {
 
                 byte[] message;
                 message = MessageFactoryChord.createMessage(3, "RESTORE", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort());
-                SSLEngineClient client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
+                SSLEngineClient client;
+
+                try {
+                client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
 
                 client.connect();
                 client.write(message);
                 client.read();
                 client.shutdown();
 
+                } catch (Exception e) {
+                    this.sn = PeerClient.getNode().find_successor(this.sn.getId());
+                    System.out.println("OLAAAAAa");
+                    continue;
+                }
+
                 MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
                 messageFactoryChord.parseMessage(client.getPeerAppData().array());
+
+                System.out.println("RESTORE TYP " + messageFactoryChord.messageType);
 
                 if (messageFactoryChord.messageType.equals("SENDING_FILE")) {
                     System.out.println("Waiting for peer to send the file...");

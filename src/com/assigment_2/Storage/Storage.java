@@ -22,9 +22,16 @@ public class Storage implements Serializable {
     private int overallSpace;
     private int occupiedSpace;
 
+    //files he has sent a backup
     private final ConcurrentHashMap<BigInteger, FileInfo> backedUpFiles = new ConcurrentHashMap<>();
+
+    //files he has stored
     private final ArrayList<BigInteger> storedFiles = new ArrayList<>();
+
+    //rep of files stored
     private final ConcurrentHashMap<BigInteger, Integer> storedFilesReplicationDegree = new ConcurrentHashMap<BigInteger, Integer>();
+
+    //buffer to store files while they are being received
     private final ConcurrentHashMap<BigInteger, ArrayList<byte[]>> bufferFiles = new ConcurrentHashMap<>();
 
     public Storage() {
@@ -77,6 +84,12 @@ public class Storage implements Serializable {
         }
     }
 
+    public boolean hasFileStored(BigInteger id) {
+
+        return this.storedFilesReplicationDegree.contains(id);
+
+    }
+
     public FileInfo getFileInfo(String filepath) {
         Set<BigInteger> keys = backedUpFiles.keySet();
 
@@ -98,6 +111,23 @@ public class Storage implements Serializable {
         if (!this.storedFiles.contains(fileId)) {
             this.storedFiles.add(fileId);
             this.storedFilesReplicationDegree.put(fileId, repDegree);
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean removeStoredFiles(BigInteger fileId){
+
+        if(this.storedFiles.contains(fileId)){
+            this.storedFilesReplicationDegree.remove(fileId);
+            this.storedFiles.remove(fileId);
+
+            File file = new File(PeerClient.getId() + "/" + fileId);
+
+            file.delete();
+            PeerClient.getStorage().setOccupiedSpace((int) (PeerClient.getStorage().getOccupiedSpace() - file.length()));
+
             return true;
         }
 

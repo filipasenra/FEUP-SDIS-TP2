@@ -116,6 +116,8 @@ public class Node extends SimpleNode implements Runnable {
             if (x != null && !this.id.equals(x.id) && (this.id.equals(this.listOfSuccessors[i].id) || isBetween(x.id, this.id, this.listOfSuccessors[i].id))) {
                 this.listOfSuccessors[i] = x;
                 this.listOfSuccessors[i+1] = (this.listOfSuccessors[i].id.equals(this.id)) ? this.listOfSuccessors[0] : this.listOfSuccessors[i].getSuccessor();
+
+            if(i == 0)
                 fingerTable[0].node = x;
             }
 

@@ -129,16 +129,15 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
 
     private void manageDelete() throws Exception {
 
-        if (PeerClient.getStorage().getStoredFiles().remove(messageFactoryChord.requestId)) {
-            PeerClient.getStorage().getStoredFilesReplicationDegree().remove(messageFactoryChord.requestId);
-            File file = new File(PeerClient.getId() + "/" + messageFactoryChord.requestId);
-            byte[] fileData = Files.readAllBytes(file.toPath());
+        if (PeerClient.getStorage().removeStoredFiles(messageFactoryChord.requestId)) {
 
+            File file = new File(PeerClient.getId() + "/" + messageFactoryChord.requestId);
             file.delete();
-            PeerClient.getStorage().setOccupiedSpace(PeerClient.getStorage().getOccupiedSpace() - fileData.length);
+            PeerClient.getStorage().setOccupiedSpace((int) (PeerClient.getStorage().getOccupiedSpace() - file.length()));
 
             byte[] message = MessageFactoryChord.createMessage(3, "DELETED", messageFactoryChord.requestId, messageFactoryChord.address, messageFactoryChord.port);
             PeerClient.getObj().write(socketChannel, engine, message);
+
         } else {
             byte[] message = MessageFactoryChord.createMessage(3, "NOT_DELETED", messageFactoryChord.requestId, messageFactoryChord.address, messageFactoryChord.port);
             PeerClient.getObj().write(socketChannel, engine, message);
@@ -253,10 +252,13 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
         System.out.println("[DELETE RESPONSABILITY] Received delete responsability for file " + messageFactoryChord.getRequestId() + " from peer " + messageFactoryChord.port);
         BigInteger fileId= messageFactoryChord.getRequestId();
 
-        if (PeerClient.getStorage().getStoredFilesReplicationDegree().get(fileId) != null) {
+        if (PeerClient.getStorage().hasFileStored(fileId)) {
+
             byte[] message = MessageFactoryChord.createMessage(3, "DELETED_RESPONSABILITY_ACCEPTED", PeerClient.getNode().id);
             PeerClient.getObj().write(socketChannel, engine, message);
             PeerClient.getExec().execute(new Delete(fileId, PeerClient.getStorage().getStoredFilesReplicationDegree().get(fileId)));
+            PeerClient.getStorage().removeStoredFiles(fileId);
+
         }
         else {
             PeerClient.getExec().execute(new DeleteResponsability(fileId));
@@ -266,6 +268,8 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
     }
 
     private void manageRestoring() throws Exception {
+
+        System.out.println("RESTORING");
 
         PeerClient.getStorage().addToBuffer(messageFactoryChord.requestId, messageFactoryChord.data, messageFactoryChord.chunkNo);
 

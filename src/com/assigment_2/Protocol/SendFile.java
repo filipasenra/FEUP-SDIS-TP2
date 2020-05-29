@@ -28,7 +28,6 @@ public class SendFile implements Runnable {
     @Override
     public void run() {
         try {
-            boolean successful = true;
             int chunkNo = 0;
 
             for (int i = 0; i < this.fileData.length; i += backupDataSize, chunkNo++) {
@@ -44,10 +43,15 @@ public class SendFile implements Runnable {
 
                 SSLEngineClient client = new SSLEngineClient("TLSv1.2", this.address, this.port);
 
-                client.connect();
-                client.write(message);
-                client.read();
-                client.shutdown();
+                try {
+                    client.connect();
+                    client.write(message);
+                    client.read();
+                    client.shutdown();
+                } catch (Exception e) {
+                    break;
+                }
+
 
                 MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
                 messageFactoryChord.parseMessage(client.getPeerAppData().array());

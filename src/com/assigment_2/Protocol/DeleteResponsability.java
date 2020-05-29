@@ -15,7 +15,7 @@ public class DeleteResponsability implements Runnable {
     BigInteger successorId;
     BigInteger firstPeer;
 
-    public DeleteResponsability(BigInteger fileId) throws Exception {
+    public DeleteResponsability(BigInteger fileId) {
         this.deletedCounter = 0;
         this.fileId = fileId;
         this.successorId = fileId;
@@ -24,15 +24,14 @@ public class DeleteResponsability implements Runnable {
 
     @Override
     public void run() {
-        try {
-            PeerClient.getStorage().removeBackedUpFile(this.fileId);
 
+        while (true) {
             this.sn = this.sn.getSuccessor();
 
             //CONFIRMA SE É O PRIMEIRO
             if (firstPeer != null && firstPeer.equals(this.sn.getId())) {
                 System.out.println("Not all stored copies were deleted!");
-                return;
+                break;
             } else if (firstPeer == null)
                 firstPeer = this.sn.getId();
 
@@ -42,23 +41,29 @@ public class DeleteResponsability implements Runnable {
 
             message = MessageFactoryChord.createMessage(3, "DELETE_RESPONSABILITY", this.fileId, PeerClient.getNode().getAddress(), PeerClient.getNode().getPort());
 
-            SSLEngineClient client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
+            SSLEngineClient client;
 
-            client.connect();
-            client.write(message);
-            client.read();
-            client.shutdown();
+            try {
+                client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
+                client.connect();
+                client.write(message);
+                client.read();
+                client.shutdown();
+
+            } catch (Exception e) {
+                this.sn = PeerClient.getNode().find_successor(this.sn.getId());
+                continue;
+            }
 
             MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
             messageFactoryChord.parseMessage(client.getPeerAppData().array());
 
             if (messageFactoryChord.messageType.equals("DELETED_RESPONSABILITY_ACCEPTED")) {
-               System.out.println("Received deleted responsability accepted");
+                System.out.println("Received deleted responsability accepted");
+                break;
             }
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
         }
+
     }
 
 }

@@ -21,7 +21,7 @@ public class Backup implements Runnable {
     BigInteger firstPeer;
 
 
-    public Backup(BigInteger fileId, byte[] fileData, String filepath, int replicationDegree) throws Exception {
+    public Backup(BigInteger fileId, byte[] fileData, String filepath, int replicationDegree) {
         this.perceivedRepDegree = 0;
         this.fileData = fileData;
         this.fileId = fileId;
@@ -43,6 +43,8 @@ public class Backup implements Runnable {
             while (this.perceivedRepDegree < this.replicationDegree) {
                 System.out.println("BACKUP");
                 System.out.println(this.sn.getId());
+
+                //PODE FALHAR AQUI
                 this.sn = this.sn.getSuccessor();
 
                 //CONFIRMA SE É O PRÓPRIO
@@ -76,12 +78,20 @@ public class Backup implements Runnable {
                     }
 
 
-                    SSLEngineClient client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
+                    //PODE FALHAR AQUI
+                    SSLEngineClient client;
 
-                    client.connect();
-                    client.write(message);
-                    client.read();
-                    client.shutdown();
+                    try {
+                        client = new SSLEngineClient("TLSv1.2", sn.getAddress(), sn.getPort());
+
+                        client.connect();
+                        client.write(message);
+                        client.read();
+                        client.shutdown();
+                    }catch (Exception e) {
+                        successful = false;
+                        break;
+                    }
 
                     MessageFactoryChord messageFactoryChord = new MessageFactoryChord();
                     messageFactoryChord.parseMessage(client.getPeerAppData().array());
@@ -91,6 +101,7 @@ public class Backup implements Runnable {
                        break;
                     }
                 }
+
 
                 if (successful) {
                     this.perceivedRepDegree++;
