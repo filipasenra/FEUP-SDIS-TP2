@@ -133,11 +133,17 @@ public class Peer extends SSLEngineServer implements InterfacePeer {
     public void shutdown() {
         try {
             System.out.println("\nSHUTDOWN SERVICE");
-            PeerClient.getStorage().setOverallSpace(0, exec);
-            //Thread.sleep(10000);
+            var reclaims = PeerClient.getStorage().setOverallSpace(0, exec);
+            reclaims.forEach((reclaim) -> {
+                try {
+                    reclaim.get();
+                }
+                catch (Exception e) { e.printStackTrace(); }
+            });
             stop();
             System.out.println();
         } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
