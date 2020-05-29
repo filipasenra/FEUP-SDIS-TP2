@@ -60,12 +60,24 @@ public class ReceivedChordMessagesHandler implements MessagesHandler {
                 case "GET_SUCCESSOR":
                     manageGetSuccessor();
                     break;
+                case "CHECK_UP":
+                    manageCheckUp();
                 default:
                     System.err.println("NOT A VALID PROTOCOL: " + this.messageFactoryChord.messageType);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void manageCheckUp() throws Exception {
+
+        PeerClient.getNode().notify(new SimpleNode(messageFactoryChord.address, messageFactoryChord.port, PeerClient.getNode().getM()));
+
+        byte[] message = MessageFactoryChord.createMessage(3, "I_AM_OK");
+
+        PeerClient.getObj().write(socketChannel, engine, message);
+
     }
 
     private void manageNotify() throws Exception {
