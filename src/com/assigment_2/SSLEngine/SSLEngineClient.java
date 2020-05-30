@@ -8,12 +8,12 @@ import javax.net.ssl.*;
 
 /**
  * An SSL client for TLS Protocols.
- * <p>
+ *
  * This client connects to a server by a given address and port.
- * <p>
+ *
  * After initialization, {@link SSLEngineClient#connect()} should be called.
  * This will establish a connection with the server.
- * <p>
+ *
  * After the connection is established, it is possible to write to the server
  * through the {@link SSLEngineClient#write(String)} and read a message from
  * the server through the {@link SSLEngineClient#read()}

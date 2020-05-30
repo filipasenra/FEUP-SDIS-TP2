@@ -5,10 +5,12 @@ import java.util.Arrays;
 public class Node extends SimpleNode implements Runnable {
 
     SimpleNode predecessor;
+
     private final Finger[] fingerTable;
 
     //the node’s first r successors
     private final SimpleNode[] listOfSuccessors;
+
     int next = 0;
 
     public Node(String address, int port, int m) {

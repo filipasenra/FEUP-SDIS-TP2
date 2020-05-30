@@ -39,7 +39,6 @@ public class SimpleNode {
         }
     }
 
-    //TODO: DILLING WITH EXCEPTION
     //ask node to get id's successor
     public SimpleNode getSuccessor() {
 

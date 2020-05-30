@@ -16,9 +16,9 @@ import javax.net.ssl.*;
 
 /**
  * An SSL server for TLS Protocols.
- * <p>
+ *
  * This server will listen to a specific address and port and serve TLS connections.
- * <p>
+ *
  * After initialization, {@link SSLEngineServer#run()} should be called.
  * This will allow the server to start listening to new connection requests.
  */
@@ -56,7 +56,7 @@ public class SSLEngineServer extends SSLEngineHandler implements Runnable {
         this.messagesHandler = messagesHandler;
 
         context = SSLContext.getInstance(protocol);
-        //TODO: CHANGE KEYS
+
         KeyManager[] keyManagers = createKeyManagers("../com/assigment_2/Resources/server.jks", "storepass", "keypass");
         TrustManager[] trustManagers = createTrustManagers("../com/assigment_2/Resources/trustedCerts.jks", "storepass");
 
